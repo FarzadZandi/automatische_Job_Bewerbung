@@ -1,0 +1,12 @@
+<!doctype html><html lang="de"><head><meta charset="utf-8"><title>Analyst Bewerbung</title></head><body>
+<div id="cookies"><button onclick="document.getElementById('cookies').remove()">Nur notwendige</button></div>
+<button id="apply" onclick="document.getElementById('application').style.display='block';this.remove()">Jetzt bewerben</button>
+<form id="application" style="display:none">
+  <label for="first">Vorname *</label><input id="first" required>
+  <label for="phone">Telefonnummer</label><input id="phone">
+  <label for="level">Deutschkenntnisse</label><select id="level"><option>Bitte wählen</option><option>B2</option></select>
+  <label for="why">Warum möchten Sie bei uns arbeiten?</label><textarea id="why"></textarea>
+  <label for="cv">Lebenslauf</label><input id="cv" type="file" accept=".pdf">
+  <button type="button">Weiter</button>
+</form>
+</body></html>

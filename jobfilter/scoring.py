@@ -1,0 +1,729 @@
+from __future__ import annotations
+
+import html
+import json
+import re
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any, Mapping
+
+
+UMLAUT_TABLE = str.maketrans({"ä": "ae", "ö": "oe", "ü": "ue", "ß": "ss"})
+SCORING_RULE_VERSION = "2.9-2026-11-13-r1"
+
+
+@dataclass(frozen=True)
+class ScoreResult:
+    score: int
+    raw_score: int
+    band: str
+    reason: str | None = None
+    drop_stage: str = ""
+    matched_term: str = ""
+    employment_format: str = ""
+    primary_cv_family: str = ""
+    secondary_cv_family: str = ""
+    family_scores: dict[str, int] = field(default_factory=dict)
+    matched_terms: dict[str, tuple[str, ...]] = field(default_factory=dict)
+    language_flags: tuple[str, ...] = ()
+    eligibility_flags: tuple[str, ...] = ()
+    other_flags: tuple[str, ...] = ()
+    penalties: tuple[str, ...] = ()
+    bonuses: tuple[str, ...] = ()
+    industry_trigger: str = ""
+    university_partner: str = ""
+
+    @property
+    def flags(self) -> tuple[str, ...]:
+        return tuple(dict.fromkeys((*self.language_flags, *self.eligibility_flags, *self.other_flags)))
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "score": self.score,
+            "raw_score": self.raw_score,
+            "band": self.band,
+            "reason": self.reason,
+            "drop_stage": self.drop_stage,
+            "matched_term": self.matched_term,
+            "employment_format": self.employment_format,
+            "primary_cv_family": self.primary_cv_family,
+            "secondary_cv_family": self.secondary_cv_family,
+            "family_scores": self.family_scores,
+            "matched_terms": {key: list(value) for key, value in self.matched_terms.items()},
+            "language_flags": list(self.language_flags),
+            "eligibility_flags": list(self.eligibility_flags),
+            "other_flags": list(self.other_flags),
+            "penalties": list(self.penalties),
+            "bonuses": list(self.bonuses),
+            "industry_trigger": self.industry_trigger,
+            "university_partner": self.university_partner,
+        }
+
+
+def load_keywords(path: str | Path) -> dict[str, Any]:
+    with Path(path).open(encoding="utf-8") as handle:
+        data = json.load(handle)
+    required = {
+        "_meta", "employment_gate", "hard_exclusion", "priority_title_evidence", "marketing_talking_exclusion",
+        "relevance_gate", "cv_families", "analysis_task",
+        "methods", "tools_strong", "tools_basic_or_adjacent", "context_bonus",
+        "title_boost", "kill_conditional", "penalty", "bonus", "eligibility_flags", "regex",
+    }
+    missing = required - data.keys()
+    if missing:
+        raise ValueError(f"Keyword dictionary is missing: {', '.join(sorted(missing))}")
+    family_codes(data)
+    return data
+
+
+def family_codes(keywords: Mapping[str, Any]) -> tuple[str, ...]:
+    """Return validated contiguous B01 to BNN family codes."""
+    families = keywords.get("cv_families") or {}
+    codes = tuple(_family_id(str(key)) for key in families)
+    if not 1 <= len(codes) <= 20:
+        raise ValueError("Keyword dictionary must define 1 to 20 CV families")
+    expected = tuple(f"B{i:02d}" for i in range(1, len(codes) + 1))
+    if len(set(codes)) != len(codes) or tuple(sorted(codes)) != expected:
+        raise ValueError(f"CV family codes must be contiguous: {', '.join(expected)}")
+    return expected
+
+
+def normalize(value: str) -> str:
+    value = re.sub(r"(?is)<(script|style)\b[^>]*>.*?</\1>", " ", value or "")
+    value = re.sub(r"(?s)<[^>]+>", " ", value)
+    value = html.unescape(value).lower().translate(UMLAUT_TABLE)
+    return re.sub(r"\s+", " ", value).strip()
+
+
+def _terms(group: Mapping[str, Any] | list[str]) -> tuple[str, ...]:
+    values = group if isinstance(group, list) else group.get("terms", ())
+    return tuple(value for value in (normalize(str(term)) for term in values) if value)
+
+
+def _hits(text: str, group: Mapping[str, Any] | list[str]) -> tuple[str, ...]:
+    hits: list[str] = []
+    for term in _terms(group):
+        # Very short tool/acronym terms must be complete tokens. Substring
+        # matching made e.g. "git" match "digital" and "sem" match
+        # unrelated German words.
+        if len(term) <= 3 and re.fullmatch(r"[a-z0-9]+", term):
+            matched = re.search(rf"(?<!\w){re.escape(term)}(?!\w)", text) is not None
+        else:
+            matched = term in text
+        if matched:
+            hits.append(term)
+    return tuple(dict.fromkeys(hits))
+
+
+def _token_hits(text: str, group: Mapping[str, Any] | list[str]) -> tuple[str, ...]:
+    """Match every term at token boundaries, including long title exclusions."""
+    return tuple(
+        term for term in _terms(group)
+        if re.search(rf"(?<!\w){re.escape(term)}(?!\w)", text) is not None
+    )
+
+
+def _industry_phd_trigger(
+    title: str,
+    body: str,
+    employer: str,
+    keywords: Mapping[str, Any],
+) -> tuple[str, tuple[str, ...]]:
+    group = keywords.get("industry_phd") or {}
+    if not group or group.get("enabled") is False:
+        return "", ()
+    employer_text = normalize(employer)
+    if _hits(employer_text, group["academic_employer_terms"]):
+        return "", ()
+    doctoral_hits = _token_hits(title, group["doctoral_terms"])
+    if not doctoral_hits:
+        return "", ()
+    full_text = f"{title} {body} {employer_text}".strip()
+    strong = _hits(full_text, group["strong_terms"])
+    company = _hits(full_text, group["company_signals"])
+    whitelist = _hits(employer_text, group["employer_whitelist"])
+    if strong:
+        return "strong_term", strong
+    if len(company) >= 2:
+        return "company_signals", company
+    if whitelist:
+        return "employer_whitelist", whitelist
+    return "", ()
+
+
+def doctoral_title_hits(title: str, keywords: Mapping[str, Any]) -> tuple[str, ...]:
+    return _token_hits(normalize(title), keywords["industry_phd"]["doctoral_terms"])
+
+
+def _university_partner(body: str, keywords: Mapping[str, Any]) -> tuple[str, tuple[str, ...]]:
+    group = keywords["industry_phd"]
+    hits = _hits(body, group["supervision_terms"])
+    if hits:
+        return hits[0], hits
+    pattern = group.get("university_partner_regex", "")
+    match = re.search(pattern, body, flags=re.IGNORECASE) if pattern else None
+    return (normalize(match.group(0)), (normalize(match.group(0)),)) if match else ("", ())
+
+
+def _regex_hit(text: str, pattern: str | None) -> str:
+    if not pattern:
+        return ""
+    match = re.search(pattern, text, flags=re.IGNORECASE)
+    return normalize(match.group(0)) if match else ""
+
+
+def _group_points(hits: tuple[str, ...], weight: int) -> int:
+    return min(weight + len(hits) - 1, weight * 2) if hits else 0
+
+
+def _looks_like_english_advertisement(text: str) -> bool:
+    """Conservatively identify a substantially English job description."""
+    tokens = re.findall(r"\b[a-z]+\b", text)
+    if len(tokens) < 30:
+        return False
+    english_markers = {
+        "and", "the", "you", "your", "with", "for", "our", "we", "are",
+        "will", "this", "that", "from", "to", "of", "in", "as", "on",
+        "team", "work", "skills", "experience", "responsibilities",
+    }
+    german_markers = {
+        "und", "der", "die", "das", "mit", "fuer", "wir", "sie", "du",
+        "deine", "ihre", "unser", "eine", "einer", "von", "zu", "im",
+        "auf", "als", "kenntnisse", "aufgaben", "anforderungen",
+    }
+    english_count = sum(token in english_markers for token in tokens)
+    german_count = sum(token in german_markers for token in tokens)
+    return english_count >= 8 and english_count >= (german_count * 3 // 2 + 1)
+
+
+def _english_environment_hits(text: str, group: Mapping[str, Any]) -> tuple[str, ...]:
+    explicit_terms = tuple(
+        term for term in _terms(group)
+        if term not in {"fluent english", "sehr gute englischkenntnisse", "international team", "internationales team"}
+    )
+    hits = list(_hits(text, list(explicit_terms)))
+    if _looks_like_english_advertisement(text):
+        hits.append("english-language advertisement")
+    return tuple(dict.fromkeys(hits))
+
+
+def _drop(
+    stage: str,
+    reason: str,
+    matched_term: str = "",
+    matched: dict[str, tuple[str, ...]] | None = None,
+    employment_format: str = "",
+) -> ScoreResult:
+    return ScoreResult(
+        0,
+        0,
+        "DROP",
+        reason,
+        stage,
+        matched_term,
+        employment_format=employment_format,
+        matched_terms=matched or {},
+    )
+
+
+def _special(
+    band: str,
+    reason: str,
+    *,
+    matched_term: str = "",
+    matched: dict[str, tuple[str, ...]] | None = None,
+    employment_format: str = "",
+    primary_cv_family: str = "",
+    secondary_cv_family: str = "",
+    family_scores: dict[str, int] | None = None,
+) -> ScoreResult:
+    return ScoreResult(
+        0,
+        0,
+        band,
+        reason,
+        "",
+        matched_term,
+        employment_format=employment_format,
+        primary_cv_family=primary_cv_family,
+        secondary_cv_family=secondary_cv_family,
+        family_scores=family_scores or {},
+        matched_terms=matched or {},
+    )
+
+
+def _family_id(key: str) -> str:
+    return key.split("_", 1)[0]
+
+
+def _employment_gate(title: str, body: str, structured: str, keywords: Mapping[str, Any]) -> tuple[str, tuple[str, ...]] | None:
+    gate = keywords["employment_gate"]
+    structured_n = normalize(structured)
+    allowed_structured = _hits(structured_n, gate["structured_types_allowed"])
+    title_hits = _hits(title, gate["required_title_terms"])
+    regex_hit = _regex_hit(title, keywords["regex"].get("employment_title"))
+    title_not_target_hits = _hits(title, gate["structured_types_not_target"])
+    if title_not_target_hits and not title_hits and not regex_hit:
+        return None
+    body_hits = _hits(body, gate["required_body_strong_terms"])
+    evidence = allowed_structured or title_hits or ((regex_hit,) if regex_hit else ()) or body_hits
+    if not evidence:
+        return None
+    evidence_text = " ".join((*allowed_structured, *title_hits, regex_hit, *body_hits))
+    title_evidence = " ".join((*title_hits, regex_hit))
+    all_format_text = f"{title} {structured_n} {body}".strip()
+    if any(term in title_evidence for term in ("werkstudent", "working student", "working-student")):
+        employment_format = "WERKSTUDENT / WORKING STUDENT"
+    elif any(term in title_evidence for term in ("praktikum", "praktikant", "praktikkant", "internship", "intern")):
+        employment_format = "PRAKTIKUM / INTERNSHIP"
+    elif any(term in title_evidence for term in ("bachelorarbeit", "masterarbeit", "abschlussarbeit", "thesis")):
+        employment_format = "THESIS / STUDENT PROJECT"
+    elif any(term in title_evidence for term in (
+        "studentische hilfskraft", "wissenschaftliche hilfskraft", "student assistant",
+        "student research assistant", "student employee", "hiwi",
+    )):
+        employment_format = "STUDENT ASSISTANT"
+    elif any(term in title_evidence for term in ("graduate", "trainee", "berufseinsteiger", "premaster")):
+        employment_format = "GRADUATE / TRAINEE"
+    elif any(term in title for term in (
+        "freiwilligendienst", "freiwilliges soziales jahr", "bundesfreiwilligendienst",
+        " fsj", "fsj ", " bfd", "bfd ", "referendar", "anerkennungsjahr",
+    )):
+        employment_format = "OTHER / EARLY CAREER"
+    elif any(term in allowed_structured for term in ("vollzeit", "full time", "full-time")):
+        employment_format = "FULL-TIME / VOLLZEIT"
+    elif any(term in allowed_structured for term in ("teilzeit", "part time", "part-time")):
+        employment_format = "PART-TIME / TEILZEIT"
+    elif any(term in evidence_text for term in ("werkstudent", "working student", "working-student")):
+        employment_format = "WERKSTUDENT / WORKING STUDENT"
+    elif any(term in evidence_text for term in ("praktikum", "praktikant", "internship", " intern")):
+        employment_format = "PRAKTIKUM / INTERNSHIP"
+    elif any(term in all_format_text for term in ("vollzeit", "full time", "full-time")):
+        employment_format = "FULL-TIME / VOLLZEIT"
+    elif any(term in all_format_text for term in ("teilzeit", "part time", "part-time")):
+        employment_format = "PART-TIME / TEILZEIT"
+    else:
+        employment_format = "OTHER / EARLY CAREER"
+    primary_format_terms = {
+        "PRAKTIKUM / INTERNSHIP": ("praktikum", "praktikant", "praktikkant", "internship", "intern"),
+        "WERKSTUDENT / WORKING STUDENT": ("werkstudent", "working student", "working-student"),
+        "GRADUATE / TRAINEE": ("graduate", "trainee", "berufseinsteiger", "premaster"),
+        "FULL-TIME / VOLLZEIT": ("vollzeit", "full time", "full-time"),
+        "PART-TIME / TEILZEIT": ("teilzeit", "part time", "part-time"),
+        "THESIS / STUDENT PROJECT": ("bachelorarbeit", "masterarbeit", "abschlussarbeit", "thesis"),
+        "STUDENT ASSISTANT": (
+            "studentische hilfskraft", "wissenschaftliche hilfskraft", "student assistant",
+            "student research assistant", "student employee", "hiwi",
+        ),
+    }.get(employment_format, ())
+    format_flags = _hits(all_format_text, gate.get("format_flag_terms", ()))
+    not_target_flags = _hits(all_format_text, gate["structured_types_not_target"])
+    other_formats = tuple(
+        dict.fromkeys(
+            term for term in (*format_flags, *not_target_flags)
+            if not any(primary_term in term or term in primary_term for primary_term in primary_format_terms)
+        )
+    )
+    return employment_format, other_formats
+
+
+def _family_rank(family_points: dict[str, int], title: str, full_text: str, keywords: Mapping[str, Any] | None = None) -> list[str]:
+    priority: list[str] = []
+    settings = (keywords or {}).get("cv_family_tie_breakers", {})
+    rules = settings.get("machine_rules", [])
+    for rule in rules:
+        family = str(rule.get("prefer", ""))
+        text = title if rule.get("field") == "title" else full_text
+        needles = rule.get("terms", [])
+        if family_points.get(family, 0) and any(normalize(term) in text for term in needles):
+            priority.append(family)
+    ranked = sorted(family_points, key=lambda family: (-family_points[family], family))
+    if ranked:
+        best_points = family_points[ranked[0]]
+        max_gap = int(settings.get("max_gap", 2))
+        preferred = next((family for family in priority if best_points - family_points[family] <= max_gap), None)
+        if preferred:
+            ranked.remove(preferred)
+            ranked.insert(0, preferred)
+    return ranked
+
+
+def _collect_flags(text: str, groups: Mapping[str, Any]) -> tuple[str, ...]:
+    values: list[str] = []
+    for name, group in groups.items():
+        if name.startswith("_"):
+            continue
+        if _hits(text, group):
+            values.append(str(group["flag"]))
+    return tuple(dict.fromkeys(values))
+
+
+def title_gate(title: str, keywords: Mapping[str, Any]) -> tuple[str, str, str] | None:
+    """Return a deterministic title-only route before body relevance scoring."""
+    normalized_title = normalize(title)
+    for group_name, band, stage in (
+        ("academic_title_roles", "ACADEMISCHE", ""),
+        ("senior_title_roles", "DROP", "seniority_gate"),
+        ("pure_it_title_roles", "DROP", "pure_it_title_gate"),
+        ("commercial_title_roles", "DROP", "commercial_role_gate"),
+        ("technical_support_title_roles", "DROP", "technical_support_gate"),
+    ):
+        group = keywords["hard_exclusion"].get(group_name, {})
+        hits = list(_hits(normalized_title, group))
+        for pattern in group.get("patterns", ()):
+            match = re.search(str(pattern), normalized_title, flags=re.IGNORECASE)
+            if match:
+                hits.append(match.group(0).strip())
+        for required_terms in group.get("all_term_sets", ()):
+            normalized_terms = tuple(normalize(str(term)) for term in required_terms)
+            if all(_hits(normalized_title, [term]) for term in normalized_terms):
+                hits.append(" + ".join(normalized_terms))
+        if hits and any(
+            re.search(str(pattern), normalized_title, flags=re.IGNORECASE)
+            for pattern in group.get("exception_patterns", ())
+        ):
+            # e.g. "Assistenz der Kaufmaennischen Leitung": a staff role, not a leadership role.
+            hits = []
+        if hits:
+            return band, str(group["reason"]), hits[0]
+    return None
+
+
+def priority_title_hits(title: str, keywords: Mapping[str, Any]) -> tuple[str, ...]:
+    return _hits(normalize(title), keywords["priority_title_evidence"])
+
+
+def score_text(
+    title: str,
+    body: str,
+    keywords: Mapping[str, Any],
+    thresholds: Mapping[str, int] | None = None,
+    *,
+    employment_type: str = "",
+    employer: str = "",
+) -> ScoreResult:
+    thresholds = thresholds or {"priority": 12, "review": 6}
+    normalized_title = normalize(title)
+    normalized_body = normalize(body)
+    normalized_employer = normalize(employer)
+    full_text = f"{normalized_title} {normalized_body}".strip()
+    gate = _employment_gate(normalized_title, normalized_body, employment_type, keywords)
+
+    title_exclusion_hits = _token_hits(
+        normalized_title,
+        keywords["kill_conditional"].get("thesis_trainee_title", ()),
+    )
+    if title_exclusion_hits:
+        return _drop(
+            "title_exclusion",
+            "thesis_trainee_title",
+            title_exclusion_hits[0],
+            {"kill_conditional.thesis_trainee_title": title_exclusion_hits},
+            gate[0] if gate else "",
+        )
+
+    if gate is None:
+        return _drop("employment_gate", "employment_format_not_target")
+    employment_format, other_formats = gate
+
+    security_hits = _hits(normalized_employer, keywords["industry_phd"]["security_employer_blacklist"])
+    doctoral_title_hits = _token_hits(normalized_title, keywords["industry_phd"]["doctoral_terms"])
+    if security_hits and doctoral_title_hits:
+        return _drop(
+            "employer_blacklist",
+            "industry_phd_security_employer",
+            security_hits[0],
+            {"industry_phd.security_employer_blacklist": security_hits},
+            employment_format,
+        )
+
+    industry_trigger, industry_trigger_hits = _industry_phd_trigger(
+        normalized_title, normalized_body, normalized_employer, keywords,
+    )
+    industry_mode = bool(industry_trigger)
+    industry_wrong_field_hits = _hits(
+        f"{normalized_title} {normalized_body[:800]}",
+        keywords["industry_phd"].get("wrong_field_terms", ()),
+    ) if industry_mode else ()
+    if industry_wrong_field_hits:
+        return _drop(
+            "wrong_profession",
+            "industry_phd_wrong_field",
+            industry_wrong_field_hits[0],
+            {"industry_phd.wrong_field_terms": industry_wrong_field_hits},
+            employment_format,
+        )
+
+    deterministic_title_gate = title_gate(title, keywords)
+    if deterministic_title_gate:
+        gate_band, gate_reason, gate_term = deterministic_title_gate
+        group_name = (
+            "academic_title_roles" if gate_band == "ACADEMISCHE"
+            else "senior_title_roles" if gate_reason == "excluded_senior_or_leadership_role"
+            else "commercial_title_roles" if gate_reason == "excluded_einkauf_seller_or_sales_role"
+            else "technical_support_title_roles" if gate_reason == "excluded_technical_support_role"
+            else "pure_it_title_roles"
+        )
+        title_matched = {f"hard_exclusion.{group_name}": (gate_term,)}
+        drop_stages = {
+            "senior_title_roles": "seniority_gate",
+            "commercial_title_roles": "commercial_role_gate",
+            "technical_support_title_roles": "technical_support_gate",
+        }
+        if gate_band == "DROP":
+            return _drop(
+                drop_stages.get(group_name, "pure_it_title_gate"),
+                gate_reason,
+                gate_term,
+                title_matched,
+                employment_format,
+            )
+        if not industry_mode:
+            return _special(
+                "ACADEMISCHE",
+                gate_reason,
+                matched_term=gate_term,
+                matched=title_matched,
+                employment_format=employment_format,
+            )
+
+    german_group = keywords["hard_exclusion"]["language_de_high"]
+    german_hits = list(_hits(full_text, german_group))
+    german_regex = _regex_hit(full_text, keywords["regex"].get("penalty_language_de_high"))
+    if german_regex and german_regex not in german_hits:
+        german_hits.append(german_regex)
+    body_strong: dict[str, tuple[str, ...]] = {}
+    for key, family in keywords["cv_families"].items():
+        body_strong[_family_id(key)] = _hits(normalized_body, family["strong_terms"])
+    body_analysis = _hits(normalized_body, keywords["analysis_task"])
+    wrong_hits: list[str] = []
+    for name, group in keywords["kill_conditional"].items():
+        if name.startswith("_") or name in {"rule", "thesis_trainee_title"}:
+            continue
+        wrong_hits.extend(_hits(normalized_title, group))
+    if wrong_hits and not any(body_strong.values()) and not body_analysis:
+        return _drop("wrong_profession", "wrong_profession_without_analytical_body", wrong_hits[0], {"kill_conditional": tuple(dict.fromkeys(wrong_hits))}, employment_format)
+
+    matched: dict[str, tuple[str, ...]] = {}
+    family_points: dict[str, int] = {}
+    family_contributions: dict[str, int] = {}
+    any_strong = False
+    any_weak = False
+    for key, family in keywords["cv_families"].items():
+        family_id = _family_id(key)
+        strong = _hits(full_text, family["strong_terms"])
+        weak = _hits(full_text, family["weak_terms"])
+        matched[f"{family_id}.strong"] = strong
+        matched[f"{family_id}.weak"] = weak
+        any_strong = any_strong or bool(strong)
+        any_weak = any_weak or bool(weak)
+        family_points[family_id] = len(strong) * 2 + len(weak)
+        family_contributions[family_id] = _group_points(tuple(dict.fromkeys((*strong, *weak))), int(family["weight"]))
+
+    analysis_hits = _hits(full_text, keywords["analysis_task"])
+    method_hits = _hits(full_text, keywords["methods"])
+    strong_tool_hits = _hits(full_text, keywords["tools_strong"])
+    basic_tool_hits = _hits(full_text, keywords["tools_basic_or_adjacent"])
+    matched.update({
+        "analysis_task": analysis_hits, "methods": method_hits,
+        "tools_strong": strong_tool_hits, "tools_basic_or_adjacent": basic_tool_hits,
+    })
+    english_hits = _english_environment_hits(normalized_body, keywords["bonus"]["english_environment"])
+    marketing = keywords["marketing_talking_exclusion"]
+    marketing_title_hits = _hits(normalized_title, marketing["title_terms"])
+    marketing_talking_hits = _hits(full_text, marketing["talking_terms"])
+    marketing_research = bool(
+        matched.get("B07.strong") or matched.get("B09.strong")
+    ) and bool(analysis_hits)
+    if marketing_title_hits and marketing_talking_hits and not marketing_research:
+        return _drop(
+            "marketing_talking_gate",
+            str(marketing["reason"]),
+            marketing_talking_hits[0],
+            {
+                "marketing_title": marketing_title_hits,
+                "marketing_talking": marketing_talking_hits,
+            },
+            employment_format,
+        )
+
+    ranked = _family_rank(family_points, normalized_title, full_text, keywords)
+    ranked = [family for family in ranked if family_points[family] > 0]
+    primary = ranked[0] if ranked else ""
+    secondary = ""
+    if len(ranked) > 1 and family_points[ranked[0]] - family_points[ranked[1]] <= 2:
+        secondary = ranked[1]
+    family_labels = {_family_id(key): str(value["label"]) for key, value in keywords["cv_families"].items()}
+    primary_label = family_labels.get(primary, primary)
+    secondary_label = family_labels.get(secondary, secondary)
+
+    # Recall-first gate: a strong family signal is enough on its own. Generic
+    # (weak) family wording still needs either an analytical task or a clearly
+    # English advertisement. The user explicitly prefers reviewing extra jobs
+    # over losing a potentially suitable one.
+    relevance = any_strong or (any_weak and bool(analysis_hits or english_hits))
+    if not relevance and not industry_mode:
+        first = next(
+            iter(
+                (
+                    *analysis_hits,
+                    *strong_tool_hits,
+                    *basic_tool_hits,
+                    *(term for name, terms in matched.items() if name.endswith(".strong") for term in terms),
+                )
+            ),
+            "",
+        )
+        return _special(
+            "REVIEW",
+            "uncertain_relevance_requires_manual_review",
+            matched_term=first,
+            matched=matched,
+            employment_format=employment_format,
+            primary_cv_family=primary_label,
+            secondary_cv_family=secondary_label,
+            family_scores=family_points,
+        )
+
+    # Classification tie-breakers may prefer a specific close family (for
+    # example B09 over generic B06), but the numerical contribution remains
+    # the single highest family score.
+    industry_area_hits = _hits(full_text, keywords["industry_phd"]["area_core"])
+    industry_area_broad_hits = _hits(full_text, keywords["industry_phd"]["area_broad"])
+    matched["industry_phd.area_core"] = industry_area_hits
+    matched["industry_phd.area_broad"] = industry_area_broad_hits
+    industry_area_points = max(
+        _group_points(industry_area_hits, int(keywords["industry_phd"]["area_core"]["weight"])),
+        _group_points(industry_area_broad_hits, int(keywords["industry_phd"]["area_broad"]["weight"])),
+    ) if industry_mode else 0
+    raw_score = max(max(family_contributions.values(), default=0), industry_area_points)
+    score_groups = ("analysis_task", "methods", "tools_strong", "tools_basic_or_adjacent")
+    for name in score_groups:
+        hits = _hits(full_text, keywords[name])
+        matched[name] = hits
+        raw_score += _group_points(hits, int(keywords[name]["weight"]))
+    context_group = keywords["industry_phd"]["context_terms"] if industry_mode else keywords["context_bonus"]
+    context_key = "industry_phd.context_terms" if industry_mode else "context_bonus"
+    context_hits = _hits(full_text, context_group)
+    matched[context_key] = context_hits
+    raw_score += _group_points(context_hits, int(context_group["weight"]))
+    title_hits = _hits(normalized_title, keywords["title_boost"])
+    matched["title_boost"] = title_hits
+    qualifying_title_hits = priority_title_hits(title, keywords)
+    matched["priority_title_evidence"] = qualifying_title_hits
+    if title_hits:
+        raw_score += int(keywords["title_boost"]["weight"])
+
+    score = raw_score
+    penalties: list[str] = []
+    language_flags: list[str] = []
+    high_language = False
+    for name, group in keywords["penalty"].items():
+        if name.startswith("_"):
+            continue
+        hits = list(_hits(full_text, group))
+        if name == "language_de_high":
+            regex_hit = _regex_hit(full_text, keywords["regex"].get("penalty_language_de_high"))
+            if regex_hit and regex_hit not in hits:
+                hits.append(regex_hit)
+        if name == "language_de_medium" and high_language:
+            hits = []
+        matched[f"penalty.{name}"] = tuple(hits)
+        if hits:
+            score += int(group["value"])
+            penalties.append(f"{group['flag']} ({int(group['value']):+d})")
+            if name.startswith("language_de_"):
+                language_flags.append(str(group["flag"]))
+                high_language = high_language or name == "language_de_high"
+
+    self_supervisor_hits = _hits(full_text, keywords["industry_phd"]["self_supervisor_terms"]) if industry_mode else ()
+    matched["industry_phd.self_supervisor_terms"] = self_supervisor_hits
+    if self_supervisor_hits:
+        score -= 2
+        penalties.append("SUPERVISOR SELF-FOUND (-2)")
+
+    bonuses: list[str] = []
+    for name, group in keywords["bonus"].items():
+        if name.startswith("_"):
+            continue
+        if name == "english_environment":
+            hits = english_hits
+        else:
+            hits = _hits(normalized_title if name == "exact_student_format_in_title" else full_text, group)
+        matched[f"bonus.{name}"] = hits
+        if hits:
+            score += int(group["value"])
+            bonuses.append(f"{group['flag']} ({int(group['value']):+d})")
+            if name == "english_environment":
+                language_flags.append(str(group["flag"]))
+
+    eligibility = _collect_flags(full_text, keywords["eligibility_flags"])
+    other_flags = [f"ALSO MENTIONS: {term}" for term in other_formats]
+    soft_hits = _hits(full_text, keywords.get("soft_flag", {}))
+    other_flags.extend(soft_hits)
+    for name, pattern in keywords["regex"].items():
+        if not name.startswith("flag_"):
+            continue
+        for match in re.finditer(pattern, full_text, flags=re.IGNORECASE):
+            captured = next((value for value in reversed(match.groups()) if value), match.group(0))
+            other_flags.append(f"{name.removeprefix('flag_').upper()}: {captured.strip()}")
+
+    university_partner = ""
+    if industry_mode:
+        university_partner, university_hits = _university_partner(normalized_body, keywords)
+        matched["industry_phd.university_partner"] = university_hits
+        if university_partner:
+            other_flags.append("UNI PARTNER NAMED")
+        if self_supervisor_hits:
+            other_flags.append("SUPERVISOR SELF-FOUND")
+        enrolment_hits = _hits(full_text, keywords["industry_phd"]["enrolment_terms"])
+        pay_hits = _hits(full_text, keywords["industry_phd"]["pay_terms"])
+        matched["industry_phd.enrolment_terms"] = enrolment_hits
+        matched["industry_phd.pay_terms"] = pay_hits
+        if enrolment_hits:
+            other_flags.append("ENROLMENT REQUIRED")
+        if pay_hits:
+            other_flags.append("INDUSTRY PAY")
+
+    priority_at = int(thresholds.get("priority", thresholds.get("apply", 12)))
+    review_at = int(thresholds.get("review", 6))
+    if industry_mode:
+        has_validated_area = bool(any_strong or any_weak or industry_area_hits or industry_area_broad_hits)
+        if score < 4:
+            return ScoreResult(
+                score=score, raw_score=raw_score, band="DROP",
+                reason="industry_phd_low_relevance", drop_stage="industry_phd_relevance",
+                matched_term=industry_trigger_hits[0] if industry_trigger_hits else "",
+                employment_format=employment_format,
+                primary_cv_family=primary_label, secondary_cv_family=secondary_label,
+                family_scores=family_points, matched_terms=matched,
+                language_flags=tuple(dict.fromkeys(language_flags)), eligibility_flags=eligibility,
+                other_flags=tuple(dict.fromkeys(other_flags)), penalties=tuple(penalties), bonuses=tuple(bonuses),
+                industry_trigger=industry_trigger, university_partner=university_partner,
+            )
+        band, reason = ("TOP", None) if score >= 9 and has_validated_area else ("CHECK", None)
+    elif german_hits:
+        band, reason = "DE REQUIRED", str(german_group["reason"])
+    elif score >= priority_at and qualifying_title_hits:
+        band, reason = "PRIORITY", None
+    elif score >= priority_at:
+        band, reason = "REVIEW", "priority_requires_target_title_evidence"
+    elif score >= review_at or (language_flags and raw_score >= review_at):
+        band, reason = "REVIEW", None
+    else:
+        band, reason = "REVIEW", "score_below_review_requires_manual_review"
+    audit_term = next(
+        (term for group, terms in matched.items() if not group.startswith(("penalty.", "bonus.")) for term in terms),
+        "",
+    )
+    return ScoreResult(
+        score=score, raw_score=raw_score, band=band, reason=reason,
+        drop_stage="",
+        matched_term=audit_term if reason else "",
+        employment_format=employment_format,
+        primary_cv_family=primary_label, secondary_cv_family=secondary_label,
+        family_scores=family_points, matched_terms=matched,
+        language_flags=tuple(dict.fromkeys(language_flags)), eligibility_flags=eligibility,
+        other_flags=tuple(dict.fromkeys(other_flags)), penalties=tuple(penalties), bonuses=tuple(bonuses),
+        industry_trigger=industry_trigger, university_partner=university_partner,
+    )

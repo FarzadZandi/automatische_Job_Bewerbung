@@ -1,0 +1,19 @@
+<!doctype html><html lang="de"><head><meta charset="utf-8"><title>Jetzt bewerben</title></head><body>
+<div id="host"></div>
+<form onsubmit="window.submitted=true;return false">
+<div class="field"><label>Vorname*</label><input name="firstName" value=""></div>
+<div class="field"><label>Nachname*</label><input name="lastName"></div>
+<div class="field"><input placeholder="Telefonnummer*" name="x1"></div>
+<div class="field"><input placeholder="E-Mail*" name="x2" value="schon@da.de"></div>
+<div class="field"><label>Adresse*</label><input name="addr"></div>
+<div class="upload"><p>Lebenslauf hochladen (PDF, DOC oder DOCX)</p><input type="file" style="display:none" accept=".pdf,.doc,.docx"><button type="button">Datei wählen</button></div>
+<label><input type="checkbox"> Datenschutz</label>
+<button>Absenden</button></form>
+<iframe id="fr" srcdoc='<label for="x">Vor- und Nachname</label><input id="x"><label for="y">PLZ / Ort</label><input id="y">'></iframe>
+<script>
+const root = document.getElementById('host').attachShadow({mode:'open'});
+root.innerHTML = '<label for="li">LinkedIn-Profil</label><input id="li">';
+// React-style controlled input: value only sticks when an input event is seen.
+const fn = document.querySelector('[name=firstName]'); let model = '';
+fn.addEventListener('input', () => { model = fn.value; }); window.modelValue = () => model;
+</script></body></html>

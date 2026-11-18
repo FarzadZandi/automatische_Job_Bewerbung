@@ -1,0 +1,142 @@
+# Copy this file to config.yaml and replace the contact address before running.
+contact_email: "replace-with-your-email@example.com"
+keywords_path: "keywords.json"
+cache_dir: "cache"
+# Keep false to avoid writing downloaded job pages to disk.
+cache_enabled: false
+database_path: "seen.sqlite"
+output_dir: "out"
+
+# Company career pages use public Greenhouse, Lever, Ashby, and
+# SmartRecruiters job-board APIs. Enable after reviewing companies.yaml.
+companies_enabled: false
+companies_path: "companies.yaml"
+
+# Indeed must come from an authorized official search/API export. Direct
+# scraping and automated Indeed Apply are intentionally not implemented.
+indeed_import_enabled: false
+indeed_import_path: "imports/indeed_jobs.csv"
+indeed_default_employment_type: "Vollzeit"
+
+# Application preparation reads only the full-time master workbook. The
+# jobs_other.xlsx output remains part of every normal run.
+job_documents_dir: "Job App Docs"
+application_workbook: "out/jobs_vollzeit.xlsx"
+application_output_dir: "out/applications"
+application_limit: 20
+application_max_age_days: 21
+# Set this explicitly: enrolled, graduating, graduated, or professional.
+applicant_status: "needs_confirmation"
+graduation_date: ""
+# Ordinary attachments. A single deduplicated PDF bundle is recommended.
+application_attachment_allowlist: []
+# Restricted files are never part of generic or combined uploads. They are used
+# only for fields explicitly asking for passport, visa or residence/work-authorisation evidence.
+application_residence_attachment_names: []
+enrolment_attachment_names: []
+
+# GitHub projects for the CV "Projekte" section. The public GitHub REST API is
+# free and needs no key or token (60 requests per hour without sign-in; one sync
+# uses one request per 100 repositories). Only public, non-fork repositories are read.
+# Each package's CV copy gets the most relevant projects from the catalog;
+# the source CVs in job_documents_dir are never changed.
+github_projects_enabled: false
+github_user: ""
+github_catalog_path: "Job App Docs/github_projekte.yaml"
+github_cache_path: "cache/github_repos.json"
+# prepare-applications re-syncs when the cached list is older than this.
+# 0 = never contact GitHub automatically; the catalog is used as written.
+github_sync_max_age_days: 7
+# Form filler (browser extension in extension/). Both stay local; no API, no account.
+applicant_profile_path: "Job App Docs/bewerberprofil.yaml"
+# Private recurring answers. Start from answers.example.yaml; the app also creates it from CV tool names.
+answer_bank_path: "Job App Docs/antworten.yaml"
+# Optional neutral filename stem; empty derives it from profile first_name and last_name.
+applicant_file_stem: ""
+autofill_extension_dir: "extension"
+# Application archive: Bewerbungs_Tracker.xlsx with the CV and letter text, plus the documents that were sent.
+application_archive_dir: "Bewerbungen"
+# Opening and fit paragraph of each cover letter: "claude" = your own Claude plan through the Claude Code
+# command line; "openai" = Responses API with OPENAI_API_KEY from the environment only;
+# "standard" = fixed sentences, no AI at all.
+letter_writer: "claude"
+letter_prefetch: 0  # 0 writes only after Apply next; 1 also prepares the following letter
+# Smallest model, to spare your plan's limits. A full Haiku model ID is also accepted;
+# the default remains the current Haiku alias.
+claude_model: "haiku"
+answer_language: "de"  # de = formal German answers; auto = language of each question
+openai_model: "gpt-5-mini"
+
+# Used for distance reporting only. Change both values when replicating the project.
+home_city: ""
+home_coordinates: []
+browser: "auto"
+jd_archive_dir: "Bewerbungen/Stellenarchiv"
+# Company ATS feeds have inconsistent location strings. These values define which
+# public feed entries count as relevant to the configured country/region.
+company_ats_location_terms:
+  - "germany"
+  - "deutschland"
+  - "baden-württemberg"
+  - "bavaria"
+  - "bayern"
+  - "berlin"
+  - "bonn"
+  - "cologne"
+  - "düsseldorf"
+  - "frankfurt"
+  - "hamburg"
+  - "hannover"
+  - "heidelberg"
+  - "köln"
+  - "munich"
+  - "münchen"
+  - "nuremberg"
+  - "stuttgart"
+  - "remote germany"
+  - "germany remote"
+  - "remote - germany"
+  - "dach"
+  - "emea"
+  - "europe"
+
+# Write recoverable partial workbooks after this many processed ads.
+checkpoint_every: 100
+
+# These employers are flagged for review, never automatically removed.
+staffing_agency_names:
+  - "FERCHAU"
+  - "Brunel"
+
+# Polite per-host network pacing.
+min_delay: 2.5
+max_delay: 6.0
+long_pause_every: 25
+long_pause_min: 15.0
+long_pause_max: 30.0
+
+# Independent pacing between advertisements.
+position_delay_min: 3.0
+position_delay_max: 5.0
+position_batch_size_min: 50
+position_batch_size_max: 100
+position_batch_pause_min: 60.0
+position_batch_pause_max: 120.0
+
+max_retries: 3
+request_timeout: 30.0
+
+# Zero means unlimited.
+max_ads: 0
+max_pages: 0
+
+# Prefer the public BA JSON endpoint, with safe HTML fallback.
+arbeitsagentur_use_api: true
+
+thresholds:
+  priority: 12
+  review: 6
+
+user_agents:
+  - "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+  - "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Safari/605.1.15"

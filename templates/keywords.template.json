@@ -1,0 +1,534 @@
+{
+  "_meta": {
+    "name": "Keyword dictionary for <name> (fill in stage 9)",
+    "owner": "the applicant",
+    "version": "1.0",
+    "scope": "Germany",
+    "normalization": "Lowercase; map ä→ae, ö→oe, ü→ue, ß→ss; collapse whitespace; strip HTML. Terms below are written mainly in normalized form.",
+    "_how_to_fill": "Fill every section from the person's final families (guide/09). Sections marked generic keep their German-language and seniority terms; check them against the intake. Never exclude the person's own profession."
+  },
+  "employment_gate": {
+    "_comment": "Mandatory. Accept full-time, part-time, working-student, internship, and graduate/trainee roles. Prefer structured BA employment-type metadata; otherwise use title; body-only evidence must be a strong phrase.",
+    "required_title_terms": [
+      "werkstudent",
+      "werkstudentin",
+      "werkstudierender",
+      "werkstudierende",
+      "working student",
+      "working-student",
+      "praktikum",
+      "praktikant",
+      "praktikkant",
+      "praktikantin",
+      "praktikumsstelle",
+      "praktikumsplatz",
+      "internship",
+      "student internship",
+      "trainee",
+      "graduate program",
+      "graduate programme",
+      "graduate scheme",
+      "premaster",
+      "berufseinsteiger",
+      "bachelorarbeit",
+      "masterarbeit",
+      "abschlussarbeit",
+      "thesis",
+      "studentische hilfskraft",
+      "wissenschaftliche hilfskraft",
+      "student assistant",
+      "student research assistant",
+      "student employee",
+      "hiwi",
+      "doktorand",
+      "doktorandin",
+      "doctoral candidate",
+      "doctoral researcher",
+      "phd candidate",
+      "phd student",
+      "phd",
+      "industrial phd",
+      "industry phd",
+      "industriepromotion",
+      "promotionsstelle"
+    ],
+    "required_body_strong_terms": [
+      "als werkstudent",
+      "als werkstudentin",
+      "werkstudententaetigkeit",
+      "werkstudentenstelle",
+      "working student position",
+      "join us as a working student",
+      "studentische taetigkeit als werkstudent",
+      "im rahmen eines praktikums",
+      "fuer ein praktikum",
+      "praktikumsstelle",
+      "praktikumsplatz",
+      "internship position",
+      "internship opportunity",
+      "join us as an intern",
+      "graduate program",
+      "graduate programme",
+      "graduate scheme",
+      "trainee program",
+      "traineeprogramm"
+    ],
+    "structured_types_allowed": [
+      "werkstudent",
+      "working student",
+      "praktikum",
+      "internship",
+      "trainee",
+      "graduate program",
+      "graduate programme",
+      "vollzeit",
+      "full time",
+      "full-time",
+      "teilzeit",
+      "part time",
+      "part-time",
+      "befristete beschaeftigung"
+    ],
+    "structured_types_not_target": [
+      "ausbildung",
+      "duales studium",
+      "minijob",
+      "aushilfe",
+      "freiberuflich"
+    ],
+    "format_flag_terms": [
+      "werkstudent",
+      "working student",
+      "praktikum",
+      "internship",
+      "trainee",
+      "graduate program",
+      "graduate programme",
+      "vollzeit",
+      "full time",
+      "full-time",
+      "teilzeit",
+      "part time",
+      "part-time"
+    ],
+    "rule": "PASS if structured BA employment type is allowed OR title matches required_title_terms/regex. If only the body matches, require a required_body_strong_term. Otherwise DROP with reason employment_format_not_target. Student, internship, and graduate/trainee title evidence takes precedence over generic structured full-time metadata for output routing.",
+    "_how_to_fill": "Set the formats from the intake (Vollzeit, Werkstudent, Praktikum ...). Remove formats the person does not want."
+  },
+  "hard_exclusion": {
+    "_comment": "Hard exclusions requested for this search. German high-level phrases match title/body; commercial roles match title only so research/analytics references in a body do not create false kills.",
+    "language_de_high": {
+      "reason": "german_c1_c2_or_native_required",
+      "terms": [
+        "sehr gute deutschkenntnisse",
+        "sehr gutes deutsch",
+        "sehr gute kenntnisse der deutschen sprache",
+        "verhandlungssichere deutschkenntnisse",
+        "verhandlungssicheres deutsch",
+        "deutsch auf muttersprachniveau",
+        "muttersprachliche deutschkenntnisse",
+        "deutschkenntnisse c1",
+        "deutschkenntnisse c2",
+        "deutsch c1",
+        "deutsch c2",
+        "fliessende deutschkenntnisse",
+        "fliessendes deutsch",
+        "fliessend deutsch",
+        "exzellente deutschkenntnisse",
+        "hervorragende deutschkenntnisse",
+        "hervorragendes deutsch",
+        "sehr gut auf deutsch",
+        "fluent in german",
+        "fluency in german",
+        "german fluency",
+        "business fluent german",
+        "business fluent in german",
+        "native-level german",
+        "near-native german",
+        "professional proficiency in german",
+        "full professional proficiency in german",
+        "excellent command of german",
+        "fluent german",
+        "native german",
+        "german c1",
+        "german c2"
+      ]
+    },
+    "commercial_title_roles": {
+      "reason": "excluded_einkauf_seller_or_sales_role",
+      "terms": []
+    },
+    "technical_support_title_roles": {
+      "_comment": "Activated by Applicant on 2026-11-13: technical application advice and ERP application support are not target roles.",
+      "reason": "excluded_technical_support_role",
+      "terms": [],
+      "all_term_sets": []
+    },
+    "senior_title_roles": {
+      "reason": "excluded_senior_or_leadership_role",
+      "terms": [
+        "senior",
+        "principal",
+        "director",
+        "head of",
+        "chief ",
+        "vice president",
+        "team lead",
+        "tech lead",
+        "group leader",
+        "research group leader",
+        "lead developer",
+        "lead engineer",
+        "lead architect",
+        "lead consultant",
+        "lead data scientist",
+        "lead analyst",
+        "leitender",
+        "leitende",
+        "teamleiter",
+        "teamleiterin",
+        "teamleitung",
+        "team lead",
+        "gruppenleiter",
+        "gruppenleitung",
+        "bereichsleiter",
+        "bereichsleitung",
+        "abteilungsleiter",
+        "abteilungsleitung",
+        "stabsstellenleitung",
+        "leiter*in",
+        "leiter:in",
+        "niederlassungsleiter",
+        "standortleiter"
+      ],
+      "patterns": [
+        "^staff\\s",
+        "^lead\\s",
+        "(?:^|[\\s(/-])(?:abteilungsleitung|stabsstellenleitung)(?:$|[\\s)/:-])",
+        "(?:^|[\\s(/-])leiter(?:\\*in|:in|in)?(?:$|[\\s)/:-])",
+        "(?:^|[\\s(/-])leitung(?:$|[\\s)/:-])"
+      ],
+      "exception_patterns": [
+        "\\b(?:assistenz|assistent\\w*|referent\\w*|sachbearbeit\\w*|sekretaer\\w*|mitarbeiter\\w*)\\b.*?\\b(?:der|des)\\s+(?:[a-z0-9]+\\s+)?[a-z0-9-]*leitung\\b"
+      ]
+    },
+    "pure_it_title_roles": {
+      "reason": "excluded_pure_software_it_role",
+      "all_term_sets": [],
+      "patterns": [],
+      "terms": []
+    },
+    "academic_title_roles": {
+      "reason": "academic_research_or_professorship_role",
+      "terms": []
+    },
+    "_how_to_fill": "language_de_high and senior_title_roles are generic: keep language_de_high only if German is below C1; adjust senior titles to the target level. Add title groups for professions the person excluded."
+  },
+  "priority_title_evidence": {
+    "_comment": "A score can enter PRIORITY only when the normalized title contains at least one of these target-family signals. Generic body wording alone remains REVIEW.",
+    "terms": [],
+    "_how_to_fill": "Title words that show a target family (at least 20)."
+  },
+  "marketing_talking_exclusion": {
+    "_comment": "Marketing jobs centered on outreach/talking are excluded. Research or analytics marketing jobs are rescued when they contain B07/B09 strong evidence plus an analytical task.",
+    "title_terms": [],
+    "talking_terms": [],
+    "reason": "marketing_talking_without_research_or_analytics",
+    "_how_to_fill": "Optional: titles that look relevant but are pure sales or outreach for this person."
+  },
+  "relevance_gate": {
+    "_comment": "Recall-first gate: retain potentially relevant work for manual review, accepting extra false positives to avoid false negatives.",
+    "rule": "PASS if at least one strong B01-B10 family term matches, OR if a weak family term is paired with an analysis_task or an English-language advertisement.",
+    "drop_reason": "no_family_evidence_or_weak_family_without_analysis_or_english"
+  },
+  "cv_families": {
+    "B01_short_name": {
+      "label": "B01 <Familienname>",
+      "weight": "6",
+      "strong_terms": [],
+      "weak_terms": []
+    },
+    "B02_short_name": {
+      "label": "B02 <Familienname>",
+      "weight": "6",
+      "strong_terms": [],
+      "weak_terms": []
+    }
+  },
+  "analysis_task": {
+    "_comment": "Task-level analytical evidence. These terms allow generic titles such as 'Werkstudent Business Operations' to pass when the actual work is analytical.",
+    "weight": 3,
+    "terms": [],
+    "_how_to_fill": "Task phrases typical for the person's work (30 to 100), German and English."
+  },
+  "methods": {
+    "_comment": "Methods and analytical concepts that map to Applicant's ten CV variants. They strengthen relevance but do not pass the gate alone.",
+    "weight": 3,
+    "terms": [],
+    "_how_to_fill": "Methods from T1 evidence."
+  },
+  "tools_strong": {
+    "_comment": "Applied or established tools from the master CV. They strengthen a role after relevance is established.",
+    "weight": 2,
+    "terms": [],
+    "_how_to_fill": "T1 tools only."
+  },
+  "tools_basic_or_adjacent": {
+    "_comment": "Low-weight terms from basic knowledge or adjacent tooling. Never use these to claim applied experience in application material.",
+    "weight": 1,
+    "terms": [],
+    "_how_to_fill": "T2 tools (low weight)."
+  },
+  "context_bonus": {
+    "_comment": "Useful organizational contexts for the ten CV families. Context never passes the relevance gate by itself.",
+    "weight": 2,
+    "terms": [],
+    "_how_to_fill": "Team or organisation contexts where the person fits."
+  },
+  "title_boost": {
+    "_comment": "Added once if any target term appears in the title. This helps relevant student roles rise above generic postings.",
+    "weight": 4,
+    "terms": [],
+    "_how_to_fill": "Generic title words of the person's field."
+  },
+  "kill_conditional": {
+    "_comment": "Title-based exclusions only. Strategic, analytical, research, and English-friendly HR remains eligible; pure HR administration is excluded unless strong B01-B10 or analytical body evidence rescues it.",
+    "rule": "title_match AND no_strong_cv_family_hit_in_body AND no_analysis_task_hit_in_body",
+    "thesis_trainee_title": [
+      "bachelorarbeit",
+      "masterarbeit",
+      "abschlussarbeit",
+      "thesis",
+      "trainee",
+      "graduate program",
+      "graduate programme",
+      "graduate scheme",
+      "premaster"
+    ],
+    "clinical_healthcare": [],
+    "manual_trades_production": [],
+    "hospitality_retail_service": [],
+    "pure_engineering_science": [],
+    "pure_software_it_ops": [],
+    "pure_hr_admin": [],
+    "pure_accounting_legal": [],
+    "pure_creative_content": [],
+    "pure_sales": [],
+    "education_pedagogy": [],
+    "customer_support_talking": [],
+    "operations_logistics_management": [],
+    "construction_and_generic_engineering": [],
+    "_how_to_fill": "Professions the person does NOT want (title-based). Never the person's own profession. thesis_trainee_title is generic."
+  },
+  "penalty": {
+    "_comment": "Penalties reduce rank but never remove a job after the gates pass.",
+    "language_de_high": {
+      "value": -5,
+      "flag": "GERMAN C1+ / NATIVE-LEVEL",
+      "terms": [
+        "sehr gute deutschkenntnisse",
+        "sehr gutes deutsch",
+        "verhandlungssichere deutschkenntnisse",
+        "verhandlungssicheres deutsch",
+        "deutsch auf muttersprachniveau",
+        "muttersprachliche deutschkenntnisse",
+        "deutschkenntnisse c1",
+        "deutschkenntnisse c2",
+        "deutsch c1",
+        "deutsch c2",
+        "fliessende deutschkenntnisse",
+        "fliessendes deutsch",
+        "fliessend deutsch",
+        "exzellente deutschkenntnisse",
+        "hervorragende deutschkenntnisse",
+        "hervorragendes deutsch",
+        "sehr gut auf deutsch",
+        "fluent in german",
+        "fluency in german",
+        "german fluency",
+        "business fluent german",
+        "business fluent in german",
+        "native-level german",
+        "near-native german",
+        "professional proficiency in german",
+        "full professional proficiency in german",
+        "excellent command of german",
+        "fluent german",
+        "native german",
+        "german c1",
+        "german c2"
+      ]
+    },
+    "language_de_medium": {
+      "value": -1,
+      "flag": "GERMAN B2 / GOOD GERMAN",
+      "terms": [
+        "gute deutschkenntnisse",
+        "deutschkenntnisse b2",
+        "deutsch b2",
+        "good german",
+        "german b2",
+        "working knowledge of german"
+      ]
+    },
+    "sales_heavy": {
+      "value": -2,
+      "flag": "SALES / OUTREACH HEAVY",
+      "terms": []
+    },
+    "travel_heavy": {
+      "value": -1,
+      "flag": "HIGH TRAVEL",
+      "terms": []
+    },
+    "_how_to_fill": "language_de_* only if German is below C1. Other penalties optional."
+  },
+  "bonus": {
+    "_comment": "Bonuses improve rank but do not override gates.",
+    "english_environment": {
+      "value": 2,
+      "flag": "ENGLISH-FRIENDLY",
+      "terms": [
+        "arbeitssprache englisch",
+        "working language is english",
+        "english is the working language",
+        "german is not required",
+        "no german required",
+        "deutschkenntnisse sind nicht erforderlich",
+        "international team",
+        "internationales team",
+        "fluent english",
+        "sehr gute englischkenntnisse"
+      ]
+    },
+    "exact_student_format_in_title": {
+      "value": 2,
+      "flag": "EXACT STUDENT FORMAT",
+      "terms": [
+        "werkstudent",
+        "working student",
+        "praktikum",
+        "praktikant",
+        "internship"
+      ]
+    },
+    "_how_to_fill": "english_environment only if German is below C1."
+  },
+  "eligibility_flags": {
+    "_comment": "Visible only. No automatic legal conclusion and no automatic drop.",
+    "enrollment_required": {
+      "flag": "IMMATRIKULATION REQUIRED",
+      "terms": [
+        "immatrikuliert",
+        "immatrikulation",
+        "eingeschriebener student",
+        "eingeschriebene studentin",
+        "enrolled student",
+        "currently enrolled",
+        "student status"
+      ]
+    },
+    "mandatory_internship": {
+      "flag": "PFLICHTPRAKTIKUM",
+      "terms": [
+        "pflichtpraktikum",
+        "mandatory internship",
+        "compulsory internship",
+        "vorgeschriebenes praktikum",
+        "studienordnung"
+      ]
+    },
+    "remaining_study_time": {
+      "flag": "MINIMUM REMAINING STUDY TIME",
+      "terms": [
+        "noch mindestens 12 monate immatrikuliert",
+        "noch mindestens 6 monate immatrikuliert",
+        "at least 12 months remaining",
+        "at least 6 months remaining",
+        "remaining study period"
+      ]
+    },
+    "work_authorization": {
+      "flag": "WORK-AUTHORIZATION / CITIZENSHIP CHECK",
+      "terms": [
+        "eu citizenship",
+        "eu citizen",
+        "european union citizenship",
+        "valid work permit",
+        "arbeitserlaubnis",
+        "arbeitsberechtigung",
+        "security clearance",
+        "sicherheitsueberpruefung",
+        "zuverlaessigkeitsueberpruefung"
+      ]
+    },
+    "duration": {
+      "flag": "DURATION REQUIREMENT",
+      "terms": [
+        "mindestens 3 monate",
+        "mindestens 4 monate",
+        "mindestens 5 monate",
+        "mindestens 6 monate",
+        "minimum 3 months",
+        "minimum 4 months",
+        "minimum 5 months",
+        "minimum 6 months"
+      ]
+    },
+    "_how_to_fill": "Generic flags, keep."
+  },
+  "industry_phd": {
+    "_comment": "Exclusive company-employed/company-co-funded doctorate routing. Academic employers always remain on the Academische path.",
+    "doctoral_terms": [],
+    "strong_terms": [],
+    "company_signals": [],
+    "employer_whitelist": [],
+    "security_employer_blacklist": [],
+    "academic_employer_terms": [],
+    "wrong_field_terms": [],
+    "area_core": {
+      "weight": 7,
+      "terms": []
+    },
+    "area_broad": {
+      "weight": 4,
+      "terms": []
+    },
+    "context_terms": {
+      "weight": 2,
+      "terms": []
+    },
+    "supervision_terms": [],
+    "university_partner_regex": "(?:universitaet|university|hochschule|tu\\s+[a-z][a-z-]*|lmu|kit|rwth|tum)",
+    "self_supervisor_terms": [],
+    "enrolment_terms": [],
+    "pay_terms": [],
+    "enabled": false,
+    "_how_to_fill": "Doctoral-position lane; keep enabled false unless the person wants doctoral roles."
+  },
+  "soft_flag": {
+    "_comment": "Recorded only; no score effect.",
+    "weight": 0,
+    "terms": [],
+    "_how_to_fill": "Optional words to flag for review."
+  },
+  "cv_family_tie_breakers": {
+    "_comment": "Used only when families score within max_gap points.",
+    "max_gap": 2,
+    "machine_rules": [
+      {
+        "prefer": "B02",
+        "field": "full_text",
+        "terms": []
+      }
+    ]
+  },
+  "regex": {
+    "employment_title": "\\b(werkstudent(?:in)?|werkstudierende[rs]?|praktikant(?:in)?|praktikum|working[- ]student|internship|intern|trainee|graduate (?:program|programme|scheme)|berufseinsteiger|bachelorarbeit|masterarbeit|abschlussarbeit|thesis|studentische hilfskraft|wissenschaftliche hilfskraft|student (?:research )?assistant|student employee|hiwi)\\b",
+    "penalty_language_de_high": "((?:sehr\\s+gut\\w*|fliessend\\w*|verhandlungssicher\\w*|muttersprachlich\\w*|hervorragend\\w*|exzellent\\w*)\\s+(?:in\\s+|auf\\s+)?deutsch(?:kenntnis\\w*)?(?:\\s*-?\\s*und\\s+\\w+kenntnis\\w*)?|deutsch\\w*\\s*(?:kenntnisse)?\\s*(?:auf\\s+)?(?:niveau\\s*)?(?:c1|c2)|deutsch\\w*\\s+auf\\s+muttersprach|(?:fluent|fluency|business[- ]fluent|professional proficiency)\\s+(?:in\\s+)?german|(?:german|deutsch)(?:(?:\\s*[-/&]\\s*|\\s+)(?:and|und)\\s+\\w+)?\\s+(?:fliessend\\w*|verhandlungssicher\\w*|fluency|native[- ]level)|(?:german|deutsch)\\s*(?:language\\s*)?(?:level\\s*)?(?:c1|c2))",
+    "flag_deadline": "(bewerbungsfrist|bewerbungsschluss|bewerbungen\\s+bis|application\\s+deadline|apply\\s+by|closing\\s+date)\\D{0,25}(\\d{1,2}[.\\/]\\d{1,2}[.\\/]\\d{2,4}|\\d{4}-\\d{2}-\\d{2})",
+    "flag_hours": "(\\d{1,2}([,.]\\d)?)\\s*(stunden|std|h)\\s*(pro|/)\\s*(woche|week)",
+    "flag_duration_months": "(mindestens|min\\.?|minimum|fuer|for)\\s*(\\d{1,2})\\s*(monate|months)",
+    "flag_start_date": "(ab|start|starting|beginn)\\D{0,20}(\\d{1,2}[.\\/]\\d{1,2}[.\\/]\\d{2,4}|\\d{4}-\\d{2}-\\d{2})",
+    "_how_to_fill": "Generic patterns, keep."
+  }
+}

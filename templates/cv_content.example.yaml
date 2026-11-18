@@ -1,0 +1,13 @@
+header: {name: "Max Muster", address_line: "Musterstraße 1, 70173 Stuttgart", phone: "+49 000 000000", email: "max.muster@example.org", links: []}
+profile: "Analytischer Berufseinsteiger mit Erfahrung in Datenaufbereitung, Berichterstattung und verständlicher Ergebnisdarstellung. Verbindet strukturierte Analyse mit sorgfältiger Dokumentation und arbeitet zuverlässig mit Fachbereichen zusammen. Sucht Aufgaben, in denen belastbare Auswertungen Entscheidungen unterstützen."
+experience:
+  - {employer: "Beispiel GmbH", role: "Werkstudent Datenanalyse", dates: "01/2024–06/2025", bullets: ["Bereinigte strukturierte Datensätze und dokumentierte Qualitätsprüfungen.", "Erstellte wiederverwendbare Berichte für das Fachteam."]}
+education: [{institution: "Beispieluniversität", degree: "M.Sc. Beispielstudiengang", dates: "10/2022–09/2025"}]
+competencies: [{name: "Datenanalyse", details: "Python, SQL, Excel"}]
+projects: [{name: "Nachfrageanalyse", description: "Vergleichende Auswertung eines synthetischen Datensatzes."}]
+publications: []
+languages: ["Deutsch: C1", "Englisch: C1"]
+career_breaks: []
+interests: []
+basic_knowledge: ["Power BI"]
+photo: false

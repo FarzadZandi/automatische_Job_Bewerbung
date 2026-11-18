@@ -1,0 +1,12 @@
+header: {name: string, address_line: string, phone: string, email: string, links: [string]}
+profile: string
+experience: [{employer: string, role: string, dates: string, bullets: [string]}]
+education: [{institution: string, degree: string, dates: string}]
+competencies: [{name: string, details: string}]
+projects: [{name: string, description: string}]
+publications: []
+languages: [string]
+career_breaks: []
+interests: []
+basic_knowledge: []
+photo: false

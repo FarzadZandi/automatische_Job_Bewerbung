@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>jobfilter form filler</title>
+<link rel="stylesheet" href="panel.css">
+</head>
+<body>
+<header>
+  <h1>jobfilter</h1>
+  <button id="reload" class="ghost" title="Read the data and the page again">Reload</button>
+</header>
+
+<section>
+  <label for="package">Application</label>
+  <select id="package"></select>
+  <p id="match" class="hint"></p>
+  <div id="confirm-top" hidden><button id="confirm-apply" class="confirm">Ich bewerbe mich</button><span id="confirm-state" class="hint"></span></div>
+</section>
+
+<section class="actions">
+  <button id="scan" class="ghost">1. Detect fields</button>
+  <button id="fill" class="primary">2. Fill form + attach PDFs</button>
+</section>
+<label class="hint"><input id="auto" type="checkbox"> Fill on its own when a form of one of my applications opens</label>
+<p class="notice">Fills only. No consent box, no CAPTCHA, no submitting: that is yours.</p>
+
+<section id="result-box" hidden>
+  <h2>Result <span id="summary"></span></h2>
+  <ul id="results"></ul>
+</section>
+
+<section id="chat-box">
+  <h2>Chat with Claude</h2>
+  <p class="hint">Ask anything about this application, for example: <i>Write 80 words for “What does The Best Team Wins mean to you?”</i> Claude sees this job, your CV and your letter. Copy the answer or insert it into a field.</p>
+  <div id="chat-log"></div>
+  <textarea id="chat-input" rows="4" maxlength="4000" placeholder="Your message to Claude (Ctrl+Enter sends)"></textarea>
+  <div class="chat-actions"><button id="chat-send" class="primary">Send</button><button id="chat-clear" class="ghost">New chat</button></div>
+  <p id="chat-status" class="hint"></p>
+  <div id="confirm-inline" class="notice" hidden><span id="confirm-reason"></span> <button id="confirm-inline-button" class="confirm">Ich bewerbe mich</button></div>
+</section>
+
+<section id="ai-box" hidden>
+  <h2>Answer open fields with Claude</h2>
+  <p class="hint">Expand a field and ask Claude once. Text answers are checked and inserted. Selection suggestions wait for your explicit “Use this”.</p>
+  <button id="test-claude" class="ghost">Test Claude connection</button>
+  <label for="claude-instruction">Your instruction for Claude</label>
+  <textarea id="claude-instruction" rows="4" maxlength="1200" placeholder="Example: Emphasise my experimentation and product-impact experience. Use concise English."></textarea>
+  <button id="ask-claude" class="primary">Ask Claude Haiku and insert checked answers</button>
+  <p id="claude-status" class="hint"></p>
+  <p id="ai-error" class="error"></p>
+  <ul id="answers"></ul>
+</section>
+
+<details id="copy-box">
+  <summary>All values to copy</summary>
+  <ul id="values"></ul>
+</details>
+<details>
+  <summary>Files of this application</summary>
+  <ul id="files"></ul>
+</details>
+
+<p id="status" class="hint"></p>
+<script src="rules.js"></script>
+<script src="core.js"></script>
+<script src="panel.js"></script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+# Copy to the private path configured as applicant_profile_path.
+salutation: "" # exact option used by forms
+academic_title: "" # optional title
+first_name: "Max" # legal given name
+last_name: "Muster" # legal family name
+email: "max.muster@example.org" # application email
+phone: "+49 000 000000" # application phone
+street: "Musterweg" # street only
+house_number: "1" # house number
+postal_code: "00000" # postal code
+city: "Musterstadt" # current city
+country: "Deutschland" # current country
+birth_date: "01.01.1990" # DD.MM.YYYY
+birth_place: "" # optional place of birth
+nationality: "" # leave empty for manual entry
+linkedin: "" # full profile URL
+xing: "" # full profile URL
+github: "" # full profile URL
+website: "" # portfolio URL
+german_level: "" # CEFR A1–C2 or native
+english_level: "" # CEFR A1–C2 or native
+language_statement_de: "" # one sentence approved by the person
+start_date: "" # earliest start, DD.MM.YYYY
+salary: "" # verified expectation
+notice_period: "" # current notice period
+relocation: "" # verified relocation willingness
+travel_willingness: "" # verified travel willingness
+driving_licence: "" # verified licence class, if any
+work_authorisation_text: "" # exact verified work-authorisation wording
+disability: "No" # exact profile answer, if stored
+highest_education: "" # degree, subject, institution, grade, year
+current_employment: "" # position and employment period

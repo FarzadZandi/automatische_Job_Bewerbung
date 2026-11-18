@@ -1,0 +1,17 @@
+# Fictional example (Max Muster). One block per CV family; Claude writes the real one in stage 7.
+# proofs: Handlung, Methode, Ergebnis, T1 evidence only. pair: the two proofs the app uses (0-based).
+B01:
+  name: Datenanalyse und Reporting
+  openings:
+    - "verlässliche Berichte entstehen aus geprüften Daten, und genau an dieser Stelle möchte ich in Ihrem Team als Datenanalyst ansetzen."
+    - "Ihre Fachbereiche sollen ihre Kennzahlen schneller und sicherer nutzen können, und dafür bewerbe ich mich als Datenanalyst."
+  proofs:
+    - "In meiner bisherigen Arbeit habe ich strukturierte Datensätze geprüft, bereinigt und für nachvollziehbare Auswertungen vorbereitet."
+    - "Für ein Analyseprojekt entwickelte ich einen wiederholbaren Ablauf von der Datenprüfung bis zur Ergebnisdarstellung."
+    - "Mit Python und SQL automatisierte ich wiederkehrende Abfragen und verkürzte so die Erstellung der Berichte."
+  pair: [0, 1]
+  closings:
+    vollzeit: "Einen möglichen Starttermin stimme ich gerne mit Ihnen ab."
+    trainee: "Gerne bringe ich diese Erfahrung in Ihr Traineeprogramm ein."
+  risks:
+    - "Fehlt ein verlangtes Tool, nenne ich es nicht; der Passungsabsatz zeigt verwandte, belegte Werkzeuge."

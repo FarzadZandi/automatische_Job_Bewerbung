@@ -1,0 +1,772 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="jobfilter-app" content="1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#1a1f26">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/app-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<title>jobfilter</title>
+<style>
+:root { color-scheme: light dark; --bg:#f6f7f9; --card:#fff; --ink:#17202a; --muted:#667085; --line:#d9dee5; --accent:#1f6feb; --ok:#1e8e4f; --warn:#b26a00; --bad:#c62828; }
+@media (prefers-color-scheme: dark) { :root { --bg:#111418; --card:#1a1f26; --ink:#e7eaee; --muted:#9aa4b2; --line:#303844; --accent:#4c8dff; --ok:#4cc38a; --warn:#e0a13a; --bad:#ff6b6b; } }
+* { box-sizing: border-box; }
+body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 system-ui,"Segoe UI",sans-serif; }
+main { max-width: 980px; margin: 0 auto; padding: 24px 18px 80px; }
+h1 { font-size: 22px; margin: 0 0 4px; } h2 { font-size: 17px; margin: 0 0 8px; }
+.sub { color: var(--muted); margin: 0 0 18px; }
+.card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px; margin:14px 0; }
+.step { display:inline-grid; place-items:center; width:26px; height:26px; border-radius:50%; background:var(--accent); color:#fff; font-weight:700; margin-right:8px; font-size:14px; }
+.row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin:10px 0; }
+button { font:inherit; padding:8px 14px; border-radius:8px; border:1px solid var(--line); background:transparent; color:inherit; cursor:pointer; }
+button.primary { background:var(--accent); border-color:var(--accent); color:#fff; font-weight:600; }
+button.confirm { background:var(--ok); border-color:var(--ok); color:#fff; font-weight:700; }
+button:disabled { opacity:.5; cursor:default; }
+input[type=number] { width:84px; font:inherit; padding:7px; border:1px solid var(--line); border-radius:8px; background:transparent; color:inherit; }
+input[type=text] { min-width:220px; font:inherit; padding:7px; border:1px solid var(--line); border-radius:8px; background:transparent; color:inherit; }
+textarea { width:100%; min-height:110px; font:13px/1.4 ui-monospace,Consolas,monospace; padding:10px; border:1px solid var(--line); border-radius:8px; background:transparent; color:inherit; }
+.hint { color:var(--muted); font-size:13.5px; margin:6px 0; }
+.note { border-left:4px solid var(--warn); padding:6px 12px; margin:10px 0; color:var(--muted); }
+.note.info { border-left-color:var(--ok); } .note.needs, .note.error { border-left-color:var(--bad); } .note b { color:var(--ink); display:block; }
+details { margin-top:10px; } summary { cursor:pointer; }
+code { font:13px ui-monospace,Consolas,monospace; background:rgba(127,127,127,.15); padding:1px 5px; border-radius:4px; word-break:break-all; }
+.err { color:var(--bad); white-space:pre-wrap; } .good { color:var(--ok); }
+ol.do { margin:8px 0 8px 20px; padding:0; } ol.do li { margin:6px 0; }
+table { width:100%; border-collapse:collapse; } td { padding:10px 6px; border-top:1px solid var(--line); vertical-align:top; }
+td.t b { display:block; } td.t span { color:var(--muted); font-size:13.5px; }
+.tag { display:inline-block; font-size:12px; padding:2px 8px; border-radius:10px; border:1px solid currentColor; white-space:nowrap; }
+.tag.ok{color:var(--ok)} .tag.warn{color:var(--warn)} .tag.muted{color:var(--muted)} .tag.bad{color:var(--bad)}
+td.a { text-align:right; white-space:nowrap; } td.a button { padding:6px 10px; margin:2px; font-size:13.5px; }
+pre { background:rgba(127,127,127,.12); padding:10px; border-radius:8px; max-height:220px; overflow:auto; font-size:12.5px; white-space:pre-wrap; margin:8px 0 0; }
+dialog { max-width:760px; width:92%; border:1px solid var(--line); border-radius:12px; background:var(--card); color:var(--ink); padding:20px; }
+dialog::backdrop { background:rgba(0,0,0,.45); } dialog .letter { white-space:pre-wrap; margin:12px 0; }
+.spin { display:inline-block; width:14px; height:14px; border:2px solid var(--line); border-top-color:var(--accent); border-radius:50%; animation:s 1s linear infinite; vertical-align:-2px; margin-right:6px; }
+@keyframes s { to { transform:rotate(360deg); } }
+</style>
+</head>
+<body>
+<main>
+<h1>jobfilter</h1>
+<p class="sub">One run from job search to filled application forms. You only check and submit.</p>
+<div id="extension-health" class="note error"></div>
+<div id="notices"></div>
+<div id="alerts"></div>
+
+<section class="card">
+  <h2><span class="step">1</span>Prepare</h2>
+  <p class="hint">Prepare searches and scores ads, creates packages, selects each CV, builds its PDF, and updates the form data. Cover letters are written only when you press Apply next. It can run in the background.</p>
+  <div class="row">
+    <label>Check at most <input id="ads" type="number" min="0" value="150"> ads <span class="hint">(0 = all)</span></label>
+    <label>and create <input id="limit" type="number" min="1" max="50" value="10"> new packages</label>
+  </div>
+  <div class="row">
+    <button id="prepare" class="primary">Prepare</button>
+    <button id="auto">Run everything</button>
+    <button id="schedule-prepare">Prepare every night at 03:00</button>
+  </div>
+</section>
+
+<section class="card">
+  <h2>Setup check</h2>
+  <p class="hint">Checks documents, profile, Word, Claude and the extension export without using model tokens.</p>
+  <button id="doctor">Check setup</button>
+  <div id="doctor-results"></div>
+</section>
+
+<section class="card" id="answer-bank-card">
+  <h2>Answer bank</h2>
+  <p class="hint">Recurring factual answers stay on this laptop and use zero model tokens. Fill a gap once; jobfilter reuses only the scope you approve.</p>
+  <p class="hint" id="answer-bank-path"></p>
+  <div id="answer-bank-missing"></div>
+  <details><summary>Facts</summary><div id="answer-bank-facts"></div></details>
+  <details><summary>Tools and comparable categories</summary><div id="answer-bank-tools"></div></details>
+  <details><summary>Ratings</summary><div id="answer-bank-ratings"></div></details>
+  <details><summary>Saved answers</summary><div id="answer-bank-saved"></div></details>
+  <div id="answer-bank-pending"></div>
+  <details><summary id="answer-bank-learned-title">Learned from submitted forms</summary>
+    <p class="hint">Filled for your review when a new question is very similar; shown as a suggestion when it is only somewhat similar. Learned only when you record an application as submitted.</p>
+    <div id="answer-bank-learned"></div></details>
+</section>
+
+<section class="card">
+  <h2>Add job links</h2>
+  <p class="hint">Paste one URL per line, <code>Title | URL</code>, or a Markdown job-alert link. Job boards are never fetched. Links that cannot be matched safely wait for the advertisement text below.</p>
+  <textarea id="link-text" placeholder="[Job: Title | XING Jobs](https://www.xing.com/jobs/...)"></textarea>
+  <div class="row"><button id="add-links" class="primary">Add and check links</button><button id="retry-links">Retry failed links</button></div>
+  <div id="manual-pending"></div>
+</section>
+
+<section class="card">
+  <h2><span class="step">2</span>Cover letters</h2>
+  <p class="hint" id="writer-line"></p>
+  <div id="claude-box" class="note" hidden>
+    <div class="row"><span id="claude-status"></span><button id="claude-check">Check Claude</button></div>
+    <ol id="claude-steps" class="do" hidden>
+      <li>Open PowerShell (no administrator rights needed) and run <code id="install-cmd"></code> <button class="copy" data-for="install-cmd">Copy</button></li>
+      <li>Then run <code id="login-cmd"></code> <button class="copy" data-for="login-cmd">Copy</button> Your browser opens: sign in with your Claude account. The terminal then says that the login worked.</li>
+      <li>Click "Check Claude". jobfilter finds Claude by itself; no restart needed.</li>
+    </ol>
+  </div>
+  <div id="hooks-none" class="hint">No package is waiting for a cover letter.</div>
+  <div id="hooks-todo" hidden>
+    <p><b id="hooks-count"></b> The opening and the fit paragraph are still missing. The proof paragraphs come from your checked paragraph bank.</p>
+    <div class="row">
+      <button id="write" class="primary">Write letters now</button>
+      <button id="standard">Use the standard text (no AI)</button>
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <h2><span class="step">3</span>Check and submit</h2>
+  <p class="hint">One form at a time: it opens in Edge and token-free profile data, answer-bank facts, CV and ordinary attachments fill first. Claude and the cover letter start only after you press “Ich bewerbe mich”. Consent boxes, the final check and submitting are yours.</p>
+  <div id="now" class="card note info" hidden>
+    <b>Open now: <span id="now-title"></span></b>
+    <p class="hint" id="now-hint">Check it in Edge, tick the consent boxes and submit it there. Then record the result here or in the Edge notification; the next form opens by itself.</p>
+    <div class="row">
+      <button id="now-confirm" class="confirm">Ich bewerbe mich</button>
+      <button id="now-submitted" class="primary">I submitted in Edge, next form</button>
+      <button id="now-skip">Skip this job, next</button>
+      <button id="now-later">Later, next</button>
+      <button id="now-again">Open again</button>
+      <button id="now-letter">Letter</button>
+    </div>
+  </div>
+  <div id="stale" class="note" hidden><span id="stale-text"></span> <button id="requeue">Back to the queue</button></div>
+  <div id="title-gated" class="note" hidden>
+    <b id="title-gated-count"></b>
+    <div id="title-gated-list"></div>
+  </div>
+  <div class="row"><button id="apply-next" class="primary">Apply next</button><span class="hint" id="apply-hint"></span></div>
+  <table id="queue"></table>
+  <div class="row"><button id="tracker">Open application tracker (Excel)</button><span class="hint">Every application with its CV text and letter text. Submitted documents are kept in the folder Bewerbungen\Unterlagen.</span></div>
+  <div class="row"><button id="pdf">Update PDFs and form data</button><span class="hint">Builds missing PDFs, rebuilds those of a CV or letter you changed in Word, and refreshes the form filler. Use it when a form button is greyed out.</span></div>
+</section>
+
+<section class="card" id="task-card" hidden>
+  <h2 id="task-title"></h2>
+  <pre id="task-log"></pre>
+</section>
+</main>
+<footer class="hint" style="max-width:1100px;margin:8px auto 24px;padding:0 18px"><span id="storage"></span><br><span id="usage"></span><br><span id="forms-logged"></span></footer>
+
+<dialog id="dlg">
+  <h2 id="dlg-title"></h2>
+  <p id="dlg-stage" class="note" hidden></p>
+  <p class="hint" id="dlg-meta"></p>
+  <div class="letter" id="dlg-letter"></div>
+  <div id="dlg-edit" hidden>
+    <label><b>Job-specific introduction</b><textarea id="dlg-intro"></textarea></label>
+    <label><b>Job-specific company paragraph</b><textarea id="dlg-company"></textarea></label>
+    <div id="dlg-warnings" class="note" hidden></div>
+    <details><summary>Fixed master paragraphs (read-only)</summary><div class="letter" id="dlg-fixed"></div></details>
+  </div>
+  <div class="row"><button id="dlg-save" class="primary">Save</button><button id="dlg-rewrite">Rewrite with Claude</button><button id="dlg-word">Open in Word</button><button id="dlg-folder">Open folder</button><button id="dlg-close">Close</button></div>
+</dialog>
+
+<script>
+const TOKEN = "__TOKEN__";
+const $ = (id) => document.getElementById(id);
+const LABEL = { needs_hook:["letter missing","warn"], not_submitted:["ready","ok"], approved:["approved","ok"], opened:["form opened","warn"], submitted:["submitted","muted"], failed:["failed","bad"] };
+const TASKS = { auto:"Prepare and apply next", search:"Search and packages", prepare:"Prepare", letters:"Letters and PDFs", pdf:"Update PDFs and form data", links:"Manual job links", "manual-text":"Manual advertisement" };
+let state = null, dialogId = null, wasRunning = false, claudeCheck = null, formLogErrorShown = false, shownLetterReady = "";
+const manualDrafts = new Map(), manualBusy = new Set();
+
+async function api(path, body) {
+  const options = { headers: { "X-JF-Token": TOKEN } };
+  if (body) { options.method = "POST"; options.headers["Content-Type"] = "application/json"; options.body = JSON.stringify(body); }
+  const response = await fetch(path, options);
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || "Error");
+  return data;
+}
+const el = (tag, props = {}, ...children) => { const node = Object.assign(document.createElement(tag), props); node.append(...children); return node; };
+function alertBox(text, cls = "note") { $("alerts").append(el("div", { className: `card ${cls}`, textContent: text })); }
+
+function renderQueue() {
+  const table = $("queue");
+  table.replaceChildren();
+  const rows = state.packages.filter((p) => p.status !== "submitted");
+  const sent = state.packages.filter((p) => p.status === "submitted").length;
+  if (!rows.length) table.append(el("tr", {}, el("td", { className: "hint", textContent: "No finished package yet. Start a run in step 1." })));
+  for (const p of rows) {
+    const [text, cls] = LABEL[p.status] || [p.status, "muted"];
+    const title = el("td", { className: "t" }, el("b", { textContent: p.title }), el("span", { textContent: `${p.employer}${p.location ? ", " + p.location : ""} · ${p.family} · ${p.cv}${p.hook_source === "standard" ? " · standard letter text" : ""}` }));
+    const actions = el("td", { className: "a" });
+    const view = el("button", { textContent: "Letter" });
+    view.onclick = () => showPackage(p.id);
+    view.disabled = p.status === "needs_hook";
+    actions.append(view);
+    if (["needs_hook", "not_submitted", "approved", "opened"].includes(p.status)) {
+      const open = el("button", { className: "primary", textContent: p.status === "opened" ? "Open form again" : "Open form", disabled: !p.ready, title: p.ready ? "" : (p.ready_reason || "PDF missing; run Prepare") });
+      open.onclick = async () => { try { await api("/api/open", { id: p.id }); } catch (e) { alert(e.message); } refresh(); };
+      actions.append(open);
+    }
+    if (p.status === "opened") {
+      const done = el("button", { textContent: "Submitted" }); done.onclick = () => {
+        if (confirm(`Did you complete the final submission for "${p.title}" on the employer portal?`)) setStatus(p.id, "submitted");
+      };
+      const back = el("button", { textContent: "Not yet" }); back.onclick = () => setStatus(p.id, "not_submitted");
+      actions.append(done, back);
+    }
+    if (p.status !== "submitted") { const skip = el("button", { textContent: "Skip" }); skip.onclick = () => { if (confirm(`Skip "${p.title}"?`)) setStatus(p.id, "skipped"); }; actions.append(skip); }
+    table.append(el("tr", {}, title, el("td", {}, el("span", { className: `tag ${cls}`, textContent: text })), actions));
+  }
+  if (sent) table.append(el("tr", {}, el("td", { className: "hint", colSpan: 3, textContent: `${sent} application(s) submitted.` })));
+}
+
+function renderManual() {
+  const box = $("manual-pending");
+  if (manualBusy.size || (document.activeElement && document.activeElement.closest && document.activeElement.closest("#manual-pending"))) return;
+  box.replaceChildren();
+  const rows = state.manual_pending || [];
+  const results = state.manual_results || [];
+  if (!rows.length && !results.length) return;
+  if (rows.length) box.append(el("h3", { textContent: "Needs the ad text" }), el("p", { className:"hint", textContent:"Open the original link in Edge, paste the complete advertisement, and name the employer if the text does not." }));
+  for (const row of rows) {
+    const card = el("div", { className:"card note" });
+    const saved = (state.manual_drafts || {})[row.id] || {};
+    const draft = manualDrafts.get(row.id) || saved;
+    const employer = el("input", { type:"text", placeholder:"Employer, only when absent from the text", value:draft.employer ?? row.employer ?? "" });
+    const text = el("textarea", { placeholder:"Paste the complete advertisement text", value:draft.text || "" });
+    const status = el("div", { className:"hint", textContent:saved.text ? (state.task.running ? "Saved on disk. Scoring and updating the workbooks…" : "Recovered saved text. Click Use this ad text to continue.") : "" });
+    const remember = () => manualDrafts.set(row.id, { employer:employer.value, text:text.value });
+    employer.oninput = remember; text.oninput = remember;
+    const open = el("button", { textContent:"Open original link in Edge" });
+    open.onclick = () => api("/api/manual-open", { url:row.url }).catch((e) => alert(e.message));
+    const save = el("button", { className:"primary manual-save", textContent:state.task.running ? "Waiting…" : "Use this ad text", disabled:state.task.running });
+    save.onclick = async () => {
+      manualBusy.add(row.id); remember();
+      for (const button of document.querySelectorAll("button.manual-save")) button.disabled = true;
+      save.textContent = "Saving text…";
+      status.textContent = "Saving the pasted text to disk before scoring starts.";
+      try {
+        const result = await api("/api/manual-text", { id:row.id, text:text.value, employer:employer.value });
+        manualDrafts.delete(row.id); manualBusy.delete(row.id);
+        save.blur();
+        await refresh();
+        alertBox(`${row.title}: text saved; scoring is running in the background.`, "good");
+      } catch (e) {
+        manualBusy.delete(row.id); save.disabled = false; save.textContent = "Use this ad text";
+        for (const button of document.querySelectorAll("button.manual-save")) button.disabled = state.task.running;
+        status.className = "err"; status.textContent = e.message;
+      }
+    };
+    card.append(el("b", { textContent:row.title || "Title missing" }), el("div", { className:"hint", textContent:`${row.city || "City missing"} · ${row.reason}` }), employer, text, el("div", { className:"row" }, open, save), status);
+    box.append(card);
+  }
+  if (results.length) {
+    box.append(el("h3", { textContent:"Manually added jobs" }), el("p", { className:"hint", textContent:"These jobs were saved and scored. Create an exact package here without starting another broad search." }));
+    for (const item of results) {
+      const card = el("div", { className:"card note" });
+      card.append(
+        el("b", { textContent:item.title }),
+        el("div", { textContent:item.employer || "Employer missing" }),
+        el("div", { className:"hint", textContent:`${item.band} ${item.score} · ${item.employment_format} · ${item.primary_cv_family || "no CV family"}` }),
+      );
+      const actions = el("div", { className:"row" });
+      if (item.package_id) {
+        const letter = el("button", { textContent:"Letter" });
+        letter.onclick = () => showPackage(item.package_id);
+        const recorded = item.package_status === "submitted"
+          ? "Application recorded as submitted"
+          : `Package: ${item.package_status}${item.package_ready ? " · ready" : ""}`;
+        actions.append(letter, el("span", { className:"hint", textContent:recorded }));
+        if (item.package_status === "submitted") {
+          const restore = el("button", { textContent:"Not submitted — return to queue" });
+          restore.onclick = async () => {
+            if (!confirm(`Correct "${item.title}" to Not submitted and return it to Check and submit? Excel will be corrected too.`)) return;
+            await setStatus(item.package_id, "not_submitted");
+          };
+          actions.append(restore);
+        }
+      } else if (item.package_eligible) {
+        const prepare = el("button", { className:"primary", textContent:"Create this package", disabled:state.task.running });
+        prepare.onclick = async () => {
+          try { await api("/api/prepare-manual", { url:item.url }); wasRunning = true; await refresh(); }
+          catch (e) { alert(e.message); }
+        };
+        actions.append(prepare);
+      } else {
+        actions.append(el("span", { className:"hint", textContent:"Saved, but its original URL is missing." }));
+      }
+      const remove = el("button", { textContent:"Remove", disabled:state.task.running });
+      remove.onclick = async () => {
+        const applied = item.package_status === "submitted";
+        const question = applied
+          ? `Remove "${item.title}" from this manual list? Its Excel status remains Applied.`
+          : `Remove "${item.title}"? Excel will record it as Not applied.`;
+        if (!confirm(question)) return;
+        try {
+          const result = await api("/api/manual-remove", { url:item.url });
+          alertBox(`${item.title}: removed from this list; Excel status: ${result.decision}.`, "good");
+          await refresh();
+        } catch (e) { alert(e.message); }
+      };
+      actions.append(remove);
+      card.append(actions); box.append(card);
+    }
+  }
+}
+
+async function saveBank(payload) {
+  try {
+    const result = await api("/api/answer-bank-save", payload);
+    alertBox(result.message || "Saved", "good");
+    await refresh();
+  }
+  catch (error) { alert(error.message); }
+}
+
+function bankInput(value, placeholder = "") {
+  return el("input", { type:"text", value:value || "", placeholder });
+}
+
+function renderAnswerBank() {
+  const bank = state.answer_bank || { missing:[], facts:{}, tools:[], ratings:[], saved:[] };
+  $("answer-bank-path").textContent = `Private file: ${bank.path || "Job App Docs/antworten.yaml"}`;
+  const missing = $("answer-bank-missing"); missing.replaceChildren();
+  if (!(bank.missing || []).length) missing.append(el("p", { className:"good", textContent:"No unanswered recurring question is currently in the form log." }));
+  else missing.append(el("h3", { textContent:"Questions seen with no reusable answer" }));
+  for (const item of bank.missing || []) {
+    const box = el("div", { className:"note needs" }, el("b", { textContent:item.label }), el("div", { className:"hint", textContent:`${item.kind}${item.employer ? ` · ${item.employer}` : ""}` }));
+    if (item.kind === "self-rating" && item.scale) {
+      const value = bankInput("", "Your number"); value.type = "number"; value.min = item.scale[0]; value.max = item.scale[1];
+      const save = el("button", { textContent:"Save rating" });
+      save.onclick = () => saveBank({ kind:"rating", area:item.area, value:value.value, scale_min:item.scale[0], scale_max:item.scale[1] });
+      box.append(el("div", { className:"row" }, value, el("span", { textContent:`Scale ${item.scale[0]} to ${item.scale[1]}` }), save));
+    } else {
+      const value = bankInput("", "Approved answer");
+      const scope = el("select", {}, new Option("Any employer", "any employer"), new Option("This employer only", "this employer only"));
+      const save = el("button", { textContent:"Save for later forms" });
+      save.onclick = () => saveBank({ kind:"saved", label:item.label, value:value.value, language:item.language, scope:scope.value, employer:item.employer || "" });
+      const draft = el("button", { textContent:"Antwort mit Claude" });
+      const skip = el("button", { textContent:"Überspringen", className:item.ignore_suggested ? "primary" : "" });
+      const result = el("div", { className:"hint" });
+      draft.onclick = async () => {
+        draft.disabled = true; result.textContent = "Claude Haiku formuliert einen Entwurf…";
+        try {
+          const answer = await api("/api/answer-bank-draft", { id:item.application_id || "", label:item.label });
+          if (answer.error) throw new Error(answer.error);
+          value.value = ((answer.answers || [])[0] || {}).answer || answer.answer || "";
+          result.textContent = "Entwurf geladen. Erst Save for later forms speichert ihn.";
+        } catch (error) { result.textContent = error.message; }
+        draft.disabled = false;
+      };
+      skip.onclick = () => saveBank({ kind:"ignore", label:item.label });
+      box.append(el("div", { className:"row" }, value, scope, save, draft, skip), result);
+      for (const tool of item.tools || []) {
+        const category = bankInput("", `Category for ${tool}`);
+        const categorySave = el("button", { textContent:`Set ${tool} category` });
+        categorySave.onclick = () => saveBank({ kind:"tool-category", tool, category:category.value });
+        box.append(el("div", { className:"row" }, category, categorySave));
+      }
+    }
+    missing.append(box);
+  }
+
+  const facts = $("answer-bank-facts"); facts.replaceChildren();
+  for (const [key, wording] of Object.entries(bank.facts || {})) {
+    const de = bankInput(wording.de, "German wording"), en = bankInput(wording.en, "English wording");
+    const save = el("button", { textContent:"Save" }); save.onclick = () => saveBank({ kind:"fact", key, de:de.value, en:en.value });
+    facts.append(el("div", { className:"note" }, el("b", { textContent:key }), el("div", { className:"row" }, de, en, save)));
+  }
+
+  const tools = $("answer-bank-tools"); tools.replaceChildren();
+  const toolEditor = (item = {}) => {
+    const name = bankInput(item.name, "Tool name"), aliases = bankInput((item.aliases || []).join(", "), "Aliases");
+    const years = bankInput(item.years, "Years"), level = bankInput(item.level, "Own level 1–5"), category = bankInput(item.category, "Category you choose");
+    const de = bankInput((item.example || {}).de, "One-line example DE"), en = bankInput((item.example || {}).en, "One-line example EN");
+    const save = el("button", { textContent:item.name ? "Save tool" : "Add tool" });
+    save.onclick = () => saveBank({ kind:"tool", name:name.value, aliases:aliases.value, years:years.value, level:level.value, category:category.value, example_de:de.value, example_en:en.value });
+    return el("div", { className:"note" }, el("div", { className:"row" }, name, aliases, years, level, category), el("div", { className:"row" }, de, en, save));
+  };
+  for (const item of bank.tools || []) tools.append(toolEditor(item));
+  tools.append(toolEditor());
+
+  const ratings = $("answer-bank-ratings"); ratings.replaceChildren();
+  for (const item of bank.ratings || []) ratings.append(el("div", { className:"note", textContent:`${item.area}: ${item.value} on ${item.scale && item.scale.join(" to ")}` }));
+  const area = bankInput("", "Skill area"), rating = bankInput("", "Your number"), low = bankInput("", "Scale minimum"), high = bankInput("", "Scale maximum");
+  const ratingSave = el("button", { textContent:"Add rating" }); ratingSave.onclick = () => saveBank({ kind:"rating", area:area.value, value:rating.value, scale_min:low.value, scale_max:high.value });
+  ratings.append(el("div", { className:"row" }, area, rating, low, high, ratingSave));
+
+  renderLearned(bank);
+  const saved = $("answer-bank-saved"); saved.replaceChildren();
+  for (const item of bank.saved || []) saved.append(el("div", { className:"note" }, el("b", { textContent:item.pattern }), el("div", { textContent:`${item.scope}${item.employer ? ` · ${item.employer}` : ""}` }), el("div", { className:"hint", textContent:`DE: ${(item.answer || {}).de || ""} | EN: ${(item.answer || {}).en || ""}` })));
+}
+
+function renderLearned(bank) {
+  const pending = $("answer-bank-pending"); pending.replaceChildren();
+  (bank.pending || []).forEach((item, index) => {
+    const keep = el("button", { textContent:"Keep" }), drop = el("button", { textContent:"Discard" });
+    const resolve = async (yes) => { try { await api("/api/pending-resolve", { index, keep:yes }); } catch (e) { alert(e.message); } refresh(); };
+    keep.onclick = () => resolve(true); drop.onclick = () => resolve(false);
+    pending.append(el("div", { className:"card note" },
+      el("b", { textContent:`Learned from ${item.employer || "a submitted form"}: ${item.fact.replace(/_/g, " ")} (${item.language}) = ${item.value}` }),
+      el("div", { className:"hint", textContent:`Question: ${item.label}. Keep it as your standard answer?` }), keep, drop));
+  });
+  const list = $("answer-bank-learned"); list.replaceChildren();
+  const learned = (bank.learned || []).slice().sort((a, b) => String(b.last_used).localeCompare(String(a.last_used)));
+  $("answer-bank-learned-title").textContent = `Learned from submitted forms (${learned.length})`;
+  for (const item of learned) {
+    const answer = item.group === "choice" ? bankInput(item.answer, "Chosen option") : el("textarea", { value:item.answer, rows:3 });
+    const scope = el("select"); scope.append(new Option("Any employer", "any employer"), new Option("This employer only", "this employer only")); scope.value = item.scope;
+    const ids = { key:item.key, group:item.group, language:item.language || "" };
+    const save = el("button", { textContent:"Save" }), remove = el("button", { textContent:"Delete" });
+    save.onclick = async () => { try { await api("/api/learned-edit", { ...ids, answer:answer.value, scope:scope.value }); } catch (e) { alert(e.message); } refresh(); };
+    remove.onclick = async () => { if (!confirm("Delete this learned answer?")) return; try { await api("/api/learned-edit", { ...ids, delete:true }); } catch (e) { alert(e.message); } refresh(); };
+    const variants = (item.labels || []).join(" | ");
+    list.append(el("div", { className:"note" }, el("b", { textContent:item.question }),
+      el("div", { className:"hint", textContent:`${item.group === "choice" ? "choice" : (item.language || "").toUpperCase()} · from ${item.employer || "?"} · used ${item.times_used || 1}× · last ${item.last_used || ""} · ${item.edited ? "your wording" : (item.source || "")}` }),
+      variants && variants !== item.question ? el("div", { className:"hint", textContent:`Also asked as: ${variants}` }) : "",
+      answer, scope, save, remove));
+  }
+}
+
+async function setStatus(id, status) { try { const r = await api("/api/status", { id, status }); if (r.tracker_note) alert(r.tracker_note); } catch (e) { alert(e.message); } refresh(); }
+
+async function showPackage(id) {
+  const p = await api(`/api/package?id=${encodeURIComponent(id)}`);
+  dialogId = id;
+  $("dlg-title").textContent = `${p.title}, ${p.employer}`;
+  const form = state.form_state || {};
+  $("dlg-stage").hidden = form.id !== id;
+  $("dlg-stage").textContent = form.id !== id ? "" : form.state === "ready"
+    ? `Browser preview: the form reports ${form.filled} field(s) filled and ${form.attached} file(s) attached. Review this letter and the form in Edge. Submit only in Edge, then click “I submitted in Edge, next form”.`
+    : `The automation stopped for you: ${form.reason || "manual confirmation is needed"}. Complete that step in Edge; jobfilter never confirms or submits it.`;
+  $("dlg-meta").textContent = `CV: ${p.cv} (${p.family}; keyword hits: ${p.hits || "none"}). Projects in the CV: ${p.projects.join(", ") || "unchanged"}.`;
+  $("dlg-letter").textContent = p.letter || "This package has no cover letter yet.";
+  const editable = Boolean(p.intro);
+  $("dlg-edit").hidden = !editable;
+  $("dlg-save").hidden = !editable;
+  $("dlg-word").hidden = !editable;
+  $("dlg-rewrite").hidden = !editable || state.writer !== "claude";
+  $("dlg-intro").value = p.intro || "";
+  $("dlg-company").value = p.company_paragraph || "";
+  $("dlg-fixed").textContent = (p.fixed_paragraphs || []).join("\n\n");
+  $("dlg-warnings").hidden = true;
+  if (!$("dlg").open) $("dlg").showModal();
+}
+
+function render() {
+  const relayCurrent = state.packages.find((p) => p.id === state.current);
+  window.postMessage({ jfToExtension: { action: "current", id: state.current || "", confirmed:Boolean(relayCurrent && relayCurrent.confirmed), confirmed_at:relayCurrent && relayCurrent.confirmed_at || "" } }, location.origin);
+  $("alerts").replaceChildren();
+  $("storage").textContent = state.storage || "";
+  const usage = state.usage || {};
+  $("usage").textContent = `Model tokens: ${usage.today_tokens || 0} today, ${usage.week_tokens || 0} in 7 days, ${usage.per_letter || 0} per letter and ${usage.per_form || 0} per form answer on average.`;
+  const logs = state.forms_logged || {};
+  $("forms-logged").textContent = `Forms logged: ${logs.count || 0}${logs.last ? ` (last: ${logs.last})` : ""}`;
+  const extension = state.extension || {};
+  $("extension-health").className = `note ${extension.connected && !extension.reload ? "info" : "error"}`;
+  $("extension-health").textContent = extension.reload
+    ? `Reload the extension: app files are v${extension.expected}, but Edge is running v${extension.version}. Open edge://extensions, find jobfilter form filler, click Reload, then keep this window open.`
+    : extension.connected
+      ? `Extension connected (v${extension.version}).`
+      : "Extension not connected: open edge://extensions, find jobfilter form filler, click Reload, refresh this jobfilter window, and keep this window open.";
+  $("notices").replaceChildren(...state.notices.slice().reverse().map((n) => el("div", { className: `card note ${n.kind}` }, el("b", { textContent: `${n.time}  ${n.title}` }), el("div", { textContent: n.text }))));
+  const claude = state.writer === "claude";
+  const openai = state.writer === "openai";
+  $("writer-line").textContent = claude
+    ? "Apply next writes only that job's letter through your own Claude plan. A rejected draft is corrected once, then checked standard text is used. Write letters now remains optional."
+    : openai
+      ? "ChatGPT writes through the OpenAI Responses API. Set OPENAI_API_KEY in the environment and restart jobfilter. The key is never stored or logged; without it, standard text is used."
+      : "Letters use the fixed standard text (letter_writer: standard in config.yaml).";
+  renderClaude(claude);
+  $("write").textContent = claude ? "Write letters now (Claude)" : openai ? "Write letters now (ChatGPT)" : "Write letters now";
+  const ready = state.packages.filter((p) => ["needs_hook", "not_submitted", "approved"].includes(p.status) && p.ready).length;
+  const current = state.packages.find((p) => p.id === state.current);
+  const confirmed = Boolean(current && current.confirmed);
+  $("now").hidden = !current;
+  $("now-title").textContent = current ? `${current.title}, ${current.employer}` : "";
+  $("now-letter").hidden = !current;
+  $("now-confirm").hidden = !current || confirmed;
+  $("now-submitted").hidden = !current || !confirmed;
+  $("apply-next").hidden = Boolean(current);
+  const form = state.form_state || {};
+  const letter = state.letter_state || {};
+  const uploadText = (form.uploads || []).map((item) => `${item.label}: ${(item.files || []).join(", ") || item.status}`).join("; ");
+  const uploadWarning = form.upload_warning ? `Upload warning: ${form.upload_warning}. ` : "";
+  const changedText = (form.answer_page_changed || []).length
+    ? `Claude did not insert answers because the page changed: ${form.answer_page_changed.join(", ")}. ` : "";
+  $("now-hint").textContent = !current ? "" : !confirmed
+    ? "The form is open and token-free fields and files are being filled. Review the job and press Ich bewerbe mich only when you want jobfilter to spend tokens for this application."
+    : letter.state === "writing"
+    ? "Writing your letter now. The form is already open; CV and ordinary attachments can fill while letter-dependent slots wait."
+    : letter.state === "error"
+      ? letter.text
+      : form.id !== current.id
+    ? "The form is open in Edge. jobfilter stops when it needs you or when filling and uploads are ready for review."
+    : form.state === "ready"
+      ? `${changedText}${uploadWarning}Stopped for final review: ${form.filled} field(s) filled, ${form.attached} upload slot(s) attached. ${uploadText ? `Files: ${uploadText}. ` : ""}${form.answers_inserted || 0} recurring or open answer(s) inserted. Review the letter and form, submit in Edge yourself, then confirm here.`
+      : `${changedText}${uploadWarning}Stopped because you are needed: ${form.reason || "confirmation, sign-in or CAPTCHA"}. ${uploadText ? `Uploads: ${uploadText}. ` : ""}${(form.open_labels || []).length ? `Open: ${form.open_labels.join(", ")}. ` : ""}Complete it in Edge; jobfilter will continue when the page changes.`;
+  if (current && form.id === current.id && (form.answer_rows || []).length) {
+    $("now-hint").textContent += ` Answers: ${(form.answer_rows || []).map((row) => `${row.label}: ${row.value || row.reason || row.status} (${row.status})`).join("; ")}.`;
+  }
+  if (current && letter.state === "ready" && letter.ready_at && shownLetterReady !== `${current.id}:${letter.ready_at}`) {
+    shownLetterReady = `${current.id}:${letter.ready_at}`;
+    window.postMessage({ jfToExtension:{ action:"letter-ready", id:current.id } }, location.origin);
+    showPackage(current.id).catch((error) => alert(error.message));
+  }
+  const stale = state.packages.filter((p) => p.status === "opened" && p.id !== state.current).length;
+  $("stale").hidden = !stale;
+  $("stale-text").textContent = `${stale} form(s) are still marked as open from before. Mark those you already submitted as "Submitted" in the list below, then put the rest back in the queue.`;
+  const gated = state.title_gated || [];
+  $("title-gated").hidden = !gated.length;
+  $("title-gated-count").textContent = `${gated.length} job(s) removed by the title filter`;
+  $("title-gated-list").replaceChildren(...gated.map((item) => {
+    const line = el("div", { className:"row" }, el("span", { textContent:`${item.title}, ${item.employer}` }));
+    const restore = el("button", { textContent:"Restore" });
+    restore.onclick = async () => { try { await api("/api/restore-title-gated", { id:item.id }); await refresh(); } catch (e) { alert(e.message); } };
+    line.append(restore); return line;
+  }));
+  $("apply-next").disabled = !ready || state.task.running;
+  $("apply-hint").textContent = current ? "" : ready ? `${ready} ready; they open one at a time.` : "Nothing ready to open.";
+  if (state.profile_problem) alertBox(`Applicant profile: ${state.profile_problem}`, "err");
+  else if (state.profile_missing.length) alertBox(`Empty in your profile, so not filled automatically: ${state.profile_missing.join(", ")}. File: ${state.profile_path}`);
+  if (state.start_date_passed) alertBox("Your earliest start date has passed: update it in the profile", "err");
+  const waiting = state.waiting.length;
+  $("hooks-none").hidden = waiting > 0; $("hooks-todo").hidden = waiting === 0;
+  $("hooks-count").textContent = waiting === 1 ? "1 package is waiting." : `${waiting} packages are waiting.`;
+  renderQueue();
+  renderManual();
+  renderAnswerBank();
+  const task = state.task;
+  $("task-card").hidden = !task.name;
+  $("task-title").replaceChildren(...(task.running ? [el("span", { className: "spin" })] : []), `${TASKS[task.name] || task.name}: ${task.running ? "running" : task.failed ? "ended with an error" : "done"}`);
+  $("task-log").textContent = task.log.join("\n");
+  if (task.steps && task.steps.length) $("task-log").textContent += `\n\nDurations\n${task.steps.map((step) => `${step.step}: ${step.seconds.toFixed(3)}s (${step.items} item(s))`).join("\n")}`;
+  if (task.running) $("task-log").scrollTop = $("task-log").scrollHeight;
+  for (const id of ["auto", "prepare", "pdf", "write", "standard", "add-links", "retry-links"]) $(id).disabled = task.running;
+}
+
+function renderClaude(claude) {
+  $("claude-box").hidden = !claude;
+  if (!claude) return;
+  $("install-cmd").textContent = state.claude_install;
+  $("login-cmd").textContent = (claudeCheck && claudeCheck.login) || state.claude_login;
+  let text, steps = false;
+  if (!state.claude_installed) {
+    text = "Claude's command line is not set up on this laptop yet. The Code tab of the desktop app does not count: other programs cannot use it. One-time setup:";
+    steps = true;
+  } else if (!claudeCheck || claudeCheck.path !== state.claude_path) {
+    text = `Claude found: ${state.claude_path}. Click "Check Claude" to confirm the sign-in (uses no tokens).`;
+  } else if (claudeCheck.plan) {
+    text = "Claude is ready: signed in with your Claude account.";
+  } else if (claudeCheck.signed_in === null) {
+    text = "Claude found, but its sign-in could not be read. Try \"Write letters now\"; you get a notification if it fails.";
+  } else {
+    text = claudeCheck.signed_in
+      ? `Claude Code is signed in with "${claudeCheck.method}", not your Claude plan, so it could be billed per token. Sign in with your Claude account (step 2).`
+      : "Claude found, but not signed in. Do step 2.";
+    steps = true;
+  }
+  $("claude-status").textContent = text;
+  $("claude-steps").hidden = !steps;
+  for (const li of $("claude-steps").children) li.hidden = false;
+  if (state.claude_installed && steps) $("claude-steps").children[0].hidden = true;  // installed: only the sign-in is missing
+}
+
+async function refresh() {
+  try { state = await api("/api/state"); render(); if (state.task.running || wasRunning) setTimeout(refresh, 1500); wasRunning = state.task.running; }
+  catch (e) { $("alerts").replaceChildren(el("div", { className: "card err", textContent: `The app no longer answers. Is the black window still open? (${e.message})` })); }
+}
+async function start(name, extra = {}) { try { await api("/api/task", { name, ...extra }); wasRunning = true; } catch (e) { alert(e.message); } refresh(); }
+
+$("auto").onclick = () => start("auto", { max_ads: Number($("ads").value), limit: Number($("limit").value) });
+$("schedule-prepare").onclick = async () => {
+  if (!confirm("Create a Windows task that runs Prepare every day at 03:00?")) return;
+  try { const result = await api("/api/schedule-prepare", {}); alert(`Scheduled ${result.name} at ${result.scheduled}.`); }
+  catch (e) { alert(e.message); }
+};
+$("add-links").onclick = async () => {
+  try {
+    const result = await api("/api/add-links", { text:$("link-text").value });
+    $("link-text").value = ""; wasRunning = true; alertBox(`${result.started} link(s) added.`); refresh();
+  } catch (e) { alert(e.message); }
+};
+$("retry-links").onclick = async () => {
+  try { await api("/api/retry-links", {}); wasRunning = true; refresh(); }
+  catch (e) { alert(e.message); }
+};
+$("write").onclick = () => start("letters");
+$("claude-check").onclick = async () => {
+  $("claude-check").disabled = true;
+  try { claudeCheck = await api("/api/claude-check", {}); } catch (e) { alert(e.message); }
+  $("claude-check").disabled = false;
+  refresh();
+};
+$("doctor").onclick = async () => {
+  $("doctor").disabled = true;
+  const box = $("doctor-results"); box.replaceChildren(el("p", { className:"hint", textContent:"Checking…" }));
+  try {
+    const result = await api("/api/doctor", {}); box.replaceChildren();
+    for (const line of result.lines || []) box.append(el("div", { className:line.status === "OK" ? "good" : "err",
+      textContent:`${line.status} · ${line.name}: ${line.detail}` }));
+  } catch (error) { box.replaceChildren(el("p", { className:"err", textContent:error.message })); }
+  $("doctor").disabled = false;
+};
+for (const button of document.querySelectorAll("button.copy")) {
+  button.onclick = async () => {
+    await navigator.clipboard.writeText($(button.dataset.for).textContent);
+    button.textContent = "Copied"; setTimeout(() => { button.textContent = "Copy"; }, 1200);
+  };
+}
+$("standard").onclick = () => start("letters", { standard: true });
+async function next(done, outcome) {
+  try { const r = await api("/api/apply-next", done ? { done, outcome } : {}); if (r.tracker_note) alert(r.tracker_note); }
+  catch (e) { alert(e.message); }
+  refresh();
+}
+async function confirmApply(id, requestId = "", source = "app") {
+  let result = null;
+  try {
+    result = await api("/api/confirm-apply", { id });
+    window.postMessage({ jfToExtension:{ action:"confirmed", id, requestId, source, ...result } }, location.origin);
+  } catch (e) {
+    if (source === "panel") window.postMessage({ jfToExtension:{ action:"confirmed", id, requestId, source, error:e.message } }, location.origin);
+    else alert(e.message);
+  }
+  await refresh();
+  return result;
+}
+$("apply-next").onclick = () => next();
+$("requeue").onclick = async () => {
+  if (!confirm("Put every form still marked as open back in the queue? Mark the ones you already submitted first.")) return;
+  try { const r = await api("/api/requeue-open", {}); if (r.tracker_note) alert(r.tracker_note); } catch (e) { alert(e.message); }
+  refresh();
+};
+$("now-submitted").onclick = () => {
+  if (confirm("Did you complete the final submission on the employer portal?")) next(state.current, "submitted");
+};
+$("now-confirm").onclick = () => confirmApply(state.current);
+$("now-skip").onclick = () => { if (confirm("Skip this job for good?")) next(state.current, "skipped"); };
+$("now-later").onclick = () => next(state.current, "later");
+$("now-again").onclick = async () => { try { await api("/api/open", { id: state.current }); } catch (e) { alert(e.message); } refresh(); };
+$("now-letter").onclick = () => showPackage(state.current);
+// Messages from the jobfilter extension. Claude and disk access stay in this local app.
+window.addEventListener("message", async (event) => {
+  if (event.source !== window || !event.data || !event.data.jfFromExtension) return;
+  const message = event.data.jfFromExtension;
+  if (message.action === "pong") { try { await api("/api/extension-pong", { version:message.version || "" }); await refresh(); } catch (e) {} return; }
+  if (message.action === "chat") {
+    let result;
+    try { result = await api("/api/chat", { id:message.id || "", message:message.message || "", history:message.history || [] }); }
+    catch (e) { result = { error:e.message }; }
+    window.postMessage({ jfToExtension: { action:"chat-answer", requestId:message.requestId || "", ...result } }, location.origin);
+    return;
+  }
+  if (message.action === "claude-check") {
+    try {
+      const result = await api("/api/claude-check", {});
+      window.postMessage({ jfToExtension: { action:"claude-status", requestId:message.requestId || "", connected:true, writer:state.writer, ...result } }, location.origin);
+    } catch (e) {
+      window.postMessage({ jfToExtension: { action:"claude-status", requestId:message.requestId || "", error:e.message } }, location.origin);
+    }
+    return;
+  }
+  if (message.action === "answers-inserted") { try { await api("/api/answers-inserted", message); await refresh(); } catch (e) {} return; }
+  if (message.action === "save-answer-bank") {
+    try {
+      const result = await api("/api/answer-bank-save", message);
+      window.postMessage({ jfToExtension: { action:"answer-bank-saved", requestId:message.requestId || "", result } }, location.origin);
+      await refresh();
+    } catch (e) {
+      window.postMessage({ jfToExtension: { action:"answer-bank-saved", requestId:message.requestId || "", error:e.message } }, location.origin);
+    }
+    return;
+  }
+  if (message.action === "outcome") {
+    if (message.outcome === "submitted" && !confirm("Did you complete the final submission on the employer portal?")) return;
+    return next(message.id, message.outcome);
+  }
+  if (message.action === "confirm") return confirmApply(message.id, message.requestId || "", message.source || "app");
+  if (message.action === "form-state" || message.action === "fill-result") {
+    try {
+      await api("/api/form-state", message);
+      await refresh();
+      await showPackage(message.id);
+    } catch (e) { alert(e.message); }
+    return;
+  }
+  if (message.action === "questions") {
+    try {
+      const result = await api("/api/answer", {
+        id: message.id, tabId: message.tabId, fields: message.fields || [],
+        instruction: message.instruction || "", force:Boolean(message.force), mode:message.mode || "answer",
+        source:message.source || "automatic", allow_optional:message.source === "panel",
+      });
+      await api("/api/form-answer-result", { id:message.id, answers:result.answers || [], suggestions:result.suggestions || [], rejected:result.rejected || {}, needs_bank:result.needs_bank || [] });
+      window.postMessage({ jfToExtension: {
+        action: "answers", id:message.id, tabId: message.tabId, answers: result.answers || [],
+        suggestions:result.suggestions || [],
+        rejected:result.rejected || {}, needs_bank:result.needs_bank || [], yours:result.yours || [], reason:result.reason || "", kind:result.kind || "",
+        model:result.model || "haiku", requestId:message.requestId || "", source:message.source || "automatic",
+        pageKey:message.pageKey || "", fields:(message.fields || []).map((field) => ({ uid:field.uid, label:field.label })),
+      } }, location.origin);
+      if (result.reason) alertBox(`Open form questions: ${result.reason}`);
+    } catch (e) {
+      window.postMessage({ jfToExtension: {
+        action:"answers", id:message.id, tabId:message.tabId, answers:[], reason:e.message,
+        requestId:message.requestId || "", source:message.source || "automatic", pageKey:message.pageKey || "",
+        fields:(message.fields || []).map((field) => ({ uid:field.uid, label:field.label })),
+      } }, location.origin);
+    }
+    return;
+  }
+  if (message.action === "observe") {
+    try { await api("/api/observe", message); } catch (e) { /* learning must never interrupt a form */ }
+    return;
+  }
+  if (message.action === "log") {
+    try { await api("/api/form-log", message); }
+    catch (e) {
+      if (!formLogErrorShown) { formLogErrorShown = true; alertBox(`Form learning log could not be saved: ${e.message}`, "err"); }
+    }
+    return;
+  }
+  if (message.action === "contact") {
+    try { await api("/api/contact", { id: message.id, email: message.email || "", link: message.link || "" }); } catch (e) { alert(e.message); }
+    refresh();
+  }
+});
+$("prepare").onclick = () => start("prepare", { max_ads: Number($("ads").value), limit: Number($("limit").value) });
+$("pdf").onclick = () => start("pdf");
+$("tracker").onclick = () => api("/api/tracker", {}).then((r) => { if (r.tracker_note) alert(r.tracker_note); }).catch((e) => alert(e.message));
+$("dlg-close").onclick = () => $("dlg").close();
+$("dlg-folder").onclick = () => api("/api/folder", { id: dialogId }).catch((e) => alert(e.message));
+$("dlg-word").onclick = () => api("/api/letter-open", { id: dialogId }).catch((e) => alert(e.message));
+$("dlg-save").onclick = async () => {
+  try {
+    const result = await api("/api/letter-save", { id:dialogId, intro:$("dlg-intro").value, company_paragraph:$("dlg-company").value });
+    $("dlg-warnings").hidden = !result.warnings.length;
+    $("dlg-warnings").textContent = result.warnings.length ? `Saved. Please review these warnings:\n• ${result.warnings.join("\n• ")}` : "";
+    $("dlg-letter").textContent = result.paragraphs.join("\n\n");
+    window.postMessage({ jfToExtension: { action:"reattach", id:dialogId } }, location.origin);
+    if (result.reopen) alert("Saved and the extension was told to re-attach. If the portal keeps the old file, re-open the form.");
+  } catch (e) { alert(e.message); }
+};
+$("dlg-rewrite").onclick = async () => {
+  try {
+    const result = await api("/api/letter-rewrite", { id:dialogId });
+    $("dlg-intro").value = result.intro; $("dlg-company").value = result.company_paragraph;
+    $("dlg-warnings").hidden = !result.warnings.length;
+    $("dlg-warnings").textContent = result.warnings.length ? `Claude draft warnings:\n• ${result.warnings.join("\n• ")}` : "Claude draft loaded for review. Nothing has been saved yet.";
+  } catch (e) { alert(e.message); }
+};
+window.addEventListener("focus", refresh);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) refresh(); });
+// Tells the app that its window is open; closing the window stops the app.
+const ping = () => api("/api/ping", {}).catch(() => {});
+ping(); setInterval(ping, 20000); setInterval(refresh, 30000);
+window.addEventListener("pagehide", () => navigator.sendBeacon(`/api/bye?t=${encodeURIComponent(TOKEN)}`, "{}"));
+refresh();
+function extensionPing() { if (!document.hidden) window.postMessage({ jfToExtension:{ action:"ping" } }, location.origin); }
+extensionPing();
+setInterval(extensionPing, 30000);
+document.addEventListener("visibilitychange", extensionPing);
+</script>
+</body>
+</html>

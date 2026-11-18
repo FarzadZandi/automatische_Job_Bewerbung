@@ -1,0 +1,22 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Apply</title>
+<style>.select__single-value{display:inline}.requiredInput{opacity:0;position:absolute;bottom:0;left:0;width:100%;height:20px}</style></head><body>
+<form>
+ <div><label for="first_name">First Name*</label><input id="first_name" type="text" required></div>
+ <div><label for="phone">Phone*</label><input id="phone" type="tel" required></div>
+ <div class="select__container"><label id="country-label" for="country" class="select__label">Country*</label>
+  <div class="select__control"><div class="select__value-container"><div class="select__single-value">Germany</div>
+   <input class="select__input" id="country" role="combobox" aria-labelledby="country-label" aria-autocomplete="list" value=""></div></div>
+  <input name="country" type="hidden" value="DE">
+  <input tabindex="-1" autocomplete="off" aria-hidden="true" required class="requiredInput" value="">
+ </div>
+ <div class="select__container"><label id="q1-label" for="q1">Will you now or in the future require immigration sponsorship for employment visa status?*</label>
+  <div class="select__control"><div class="select__value-container">
+   <input class="select__input" id="q1" role="combobox" aria-labelledby="q1-label" aria-autocomplete="list" value=""></div></div>
+  <input tabindex="-1" autocomplete="off" aria-hidden="true" required class="requiredInput" value="">
+ </div>
+ <div><label for="q2">What does "The Best Team Wins" mean to you?</label><textarea id="q2"></textarea></div>
+ <div><label for="q3">Most Recent Employer*</label><input id="q3" type="text"></div>
+</form>
+<script>
+document.getElementById('phone').addEventListener('input', (e) => { e.target.value = e.target.value.replace(/^\+49\s*/, '0'); });
+</script></body></html>

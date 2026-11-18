@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<body>
+  <form>
+    <label for="start">What is your earliest possible start date for this role? (please use DD/MM/YYYY format)</label>
+    <input id="start" type="text" required>
+
+    <label for="salary">What are your salary expectations for this role? (gross/annual - based on 40hrs/week)</label>
+    <input id="salary" type="text" required>
+
+    <label for="country">In which Country do you currently live?</label>
+    <select id="country" required>
+      <option value="">Please select</option>
+      <option value="DE">Germany</option>
+      <option value="FR">France</option>
+    </select>
+
+    <label for="english">What is your level of English?</label>
+    <select id="english" required>
+      <option value="">Please select</option>
+      <option value="B2" selected>B2</option>
+      <option value="C1">C1</option>
+    </select>
+
+    <label for="disability">Do you have a disability?</label>
+    <select id="disability" required>
+      <option value="">Please select</option>
+      <option value="yes">Yes</option>
+      <option value="no">No, I do not have a disability</option>
+    </select>
+
+    <fieldset>
+      <legend>Haben Sie eine Schwerbehinderung?</legend>
+      <label><input type="radio" name="disabled_de" value="ja">Ja</label>
+      <label><input type="radio" name="disabled_de" value="nein">Nein</label>
+    </fieldset>
+
+    <label for="motivation">What excites you the most about this role?</label>
+    <textarea id="motivation"></textarea>
+  </form>
+</body>
+</html>

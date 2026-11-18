@@ -1,0 +1,41 @@
+{
+  "manifest_version": 3,
+  "name": "jobfilter form filler",
+  "version": "2.2.0",
+  "description": "Fills prepared application forms locally, gets checked free-text answers through the jobfilter app and Claude Haiku, and never submits.",
+  "minimum_chrome_version": "116",
+  "permissions": [
+    "scripting",
+    "sidePanel",
+    "storage",
+    "clipboardWrite",
+    "notifications"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "icons": {
+    "128": "icon128.png"
+  },
+  "action": {
+    "default_title": "jobfilter: fill this form"
+  },
+  "side_panel": {
+    "default_path": "panel.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "http://127.0.0.1/*",
+        "http://localhost/*"
+      ],
+      "js": [
+        "relay.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}

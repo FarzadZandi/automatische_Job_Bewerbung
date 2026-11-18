@@ -1,0 +1,35 @@
+# Copy to Job App Docs/antworten.yaml. This file contains examples only.
+facts:
+  notice_period: {de: "", en: ""}
+  start_date: {de: "", en: ""}
+  salary: {de: "", en: ""}
+  relocation: {de: "", en: ""}
+  travel_willingness: {de: "", en: ""}
+  driving_licence: {de: "", en: ""}
+  work_authorisation_text: {de: "", en: ""}
+  other_languages: {de: "", en: ""}
+tools:
+  - name: Python
+    aliases: [Python]
+    years: ""
+    level: ""
+    category: ""
+    example: {de: "", en: ""}
+# Names of tools that are basic knowledge only, never proof of experience.
+tier2_skills: []
+not_used:
+  templates:
+    de: "Ich habe {tool} bisher nicht eingesetzt. Vergleichbare, von mir verwendete Werkzeuge: {comparables}."
+    en: "I have not used {tool}. Comparable tools I have used: {comparables}."
+  # Set these mappings yourself; jobfilter never guesses a category.
+  tool_categories: {}
+ratings: []
+# - area: programming and integration
+#   value: 4
+#   scale: [1, 5]
+saved: []
+# - pattern: "Why are you interested in this role\\?"
+#   answer: {de: "", en: "Approved reusable answer."}
+#   scope: any employer
+#   employer: ""
+ignore: []

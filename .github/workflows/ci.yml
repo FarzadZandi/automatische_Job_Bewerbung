@@ -1,0 +1,88 @@
+name: tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  tests:
+    name: tests (${{ matrix.os }}, Python ${{ matrix.python }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+        python: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install
+        run: python -m pip install -e ".[dev,tools]"
+      - name: Browser for extension tests (Ubuntu)
+        if: runner.os == 'Linux'
+        run: |
+          python -m pip install playwright
+          python -m playwright install --with-deps chromium
+      - name: Tests
+        run: python -m pytest -q -p no:cacheprovider
+      - name: Offline tools on the fictional persona
+        shell: bash
+        run: |
+          set -e
+          P=templates/example_persona
+          mkdir -p ci_out
+          python tools/build_cv_docx.py $P/cv.yaml ci_out/Lebenslauf_Muster_Max_01.docx
+          python tools/build_letter_template.py $P/profile.yaml ci_out/Anschreiben_Muster_Max.docx
+          python tools/build_family_letters.py templates/letter_baukasten.example.yaml ci_out/letters
+          python tools/validate_bank.py $P/bank.yaml --keywords $P/keywords.json --profile $P/profile.yaml
+          python tools/ats_check.py $P/vacancies ci_out/Lebenslauf_Muster_Max_01.txt $P/ledger.json ci_out/ats.md
+          python tools/topic_check.py $P/vacancies ci_out/topics.md --kmin 2 --kmax 3 --seeds 2
+          python tools/family_overlap.py $P/vacancies ci_out/overlap
+          python -m jobfilter --config ci_out/none.yaml score-folder $P/vacancies --keywords $P/keywords.json --out ci_out/scores.csv
+          python tools/agreement.py ci_out/scores.csv claude_family primary_family --where split=main
+          python -m jobfilter --config ci_out/none.yaml doctor --json ci_out/status.json || true
+          python -c "import json; d=json.load(open('ci_out/status.json')); print(d['os'], d['pdf_engine'], d['keywords']); assert d['python_found']"
+
+  start-files:
+    name: start file (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Prepare a minimal config (as stage 11 would)
+        shell: bash
+        run: |
+          printf 'contact_email: "ci@example.org"\nhome_city: "Stuttgart"\nhome_coordinates: [48.7758, 9.1829]\nkeywords_path: "templates/example_persona/keywords.json"\n' > config.yaml
+      - name: Run the Mac start file without a person (stdin closed)
+        if: runner.os == 'macOS'
+        run: |
+          chmod +x "Start jobfilter (Mac).command" "Check setup (Mac).command"
+          ./"Start jobfilter (Mac).command" < /dev/null
+          sleep 5
+          ./"Check setup (Mac).command" < /dev/null || true
+      - name: Run the Windows start file without a person (stdin closed)
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: |
+          call "Start jobfilter (Windows).bat" < NUL
+          call "Check setup (Windows).bat" < NUL
+          exit /b 0
+      - name: Status file written by the start file
+        shell: bash
+        run: |
+          cat out/setup_status.json
+          python -c "import json; d=json.load(open('out/setup_status.json')); assert d['python_found'] and d['venv_ok'], d; print('start file OK on', d['os'])"
+      - name: App answers on 127.0.0.1:8791
+        shell: bash
+        run: |
+          for i in $(seq 1 20); do curl -fsS http://127.0.0.1:8791/api/hello && exit 0; sleep 3; done
+          echo "app did not answer"; exit 1

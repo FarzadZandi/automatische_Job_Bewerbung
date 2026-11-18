@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jobfilter"
+version = "0.1.0"
+description = "Polite personal job-board scraper and scoring filter"
+requires-python = ">=3.11"
+dependencies = [
+  "requests>=2.31",
+  "beautifulsoup4>=4.12",
+  "lxml>=5.0",
+  "openpyxl>=3.1",
+  "PyYAML>=6.0",
+  "countrystatecity-countries>=1.0.5",
+  "geopy>=2.4",
+  "pypdf>=5.0",
+  "Pillow>=10.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+tools = ["python-docx>=1.1", "scikit-learn>=1.3"]
+
+[project.scripts]
+jobfilter = "jobfilter.__main__:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.setuptools.packages.find]
+include = ["jobfilter*"]
+
+[tool.setuptools.package-data]
+jobfilter = ["app_page.html"]

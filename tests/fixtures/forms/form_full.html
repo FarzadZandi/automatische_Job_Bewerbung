@@ -1,0 +1,29 @@
+<!doctype html><html lang="de"><head><meta charset="utf-8"><title>Bewerbung Business Analyst (m/w/d) | Beispiel GmbH</title></head><body>
+<form id="f" onsubmit="window.submitted=true;return false">
+<label for="a">Anrede *</label><select id="a" name="salutation" required><option value="">Bitte wählen</option><option>Frau</option><option>Herr</option><option>Divers</option></select>
+<label for="v">Vorname *</label><input id="v" name="fn" required>
+<label for="n">Nachname *</label><input id="n" name="ln" required>
+<label for="e">E-Mail-Adresse *</label><input id="e" type="email" required>
+<label for="e2">E-Mail-Adresse wiederholen</label><input id="e2" type="email">
+<label for="t">Telefonnummer</label><input id="t" type="tel">
+<label for="s">Straße</label><input id="s"><label for="h">Hausnummer</label><input id="h">
+<label for="p">PLZ</label><input id="p"><label for="o">Ort</label><input id="o">
+<label for="l">Land</label><select id="l"><option value="">-</option><option value="AT">Österreich</option><option value="DE">Germany</option></select>
+<label for="g">Geburtsdatum</label><input id="g" type="date">
+<label for="st">Staatsangehörigkeit</label><input id="st">
+<label for="gh">Gehaltsvorstellung (brutto/Jahr)</label><input id="gh">
+<label for="et">Frühestmöglicher Eintrittstermin</label><input id="et">
+<label for="q">Wie sind Sie auf uns aufmerksam geworden?</label><select id="q"><option value="">-</option><option>Agentur für Arbeit</option><option>LinkedIn</option><option>Sonstiges</option></select>
+<label for="an">Anschreiben</label><textarea id="an"></textarea>
+<label for="w">Warum möchten Sie bei uns arbeiten?</label><textarea id="w" maxlength="600" required></textarea>
+<fieldset><legend>Sind Sie umzugsbereit?</legend><label><input type="radio" name="umzug" value="1">Ja</label><label><input type="radio" name="umzug" value="0">Nein</label></fieldset>
+<label for="cv">Lebenslauf *</label><input id="cv" type="file" accept=".pdf" required>
+<label for="cl">Anschreiben (PDF)</label><input id="cl" type="file" accept=".pdf">
+<div><label for="w2">Weitere Dokumente (Zeugnisse)</label><input id="w2" type="file" multiple accept=".pdf,.docx"><p>Laden Sie bis zu 3 zusätzliche Dateien hoch. Jede Datei darf nicht größer als 4 MB sein.</p></div>
+<label for="vw">Ländervorwahl</label><select id="vw" name="phonePrefix"><option>Deutschland +49</option></select>
+<label for="as">Adresse suchen</label><input id="as" placeholder="Adresse eingeben und aus der Liste wählen...">
+<div class="c"><label><input type="checkbox" id="long">Ich bin mir bewusst, dass meine persönlichen Daten in einer europäischen Bewerberdatenbank gespeichert werden. Eine Übersicht über die europäischen Unternehmen finden Sie hier. Wenn ich meine Bewerbung nicht elektronisch übermitteln möchte, kann ich sie auch per Post senden.</label></div>
+<label><input id="ds" type="checkbox" required> Ich habe die Datenschutzerklärung gelesen *</label>
+<input type="password" name="pw"><input type="hidden" name="token" value="x">
+<button type="submit">Bewerbung absenden</button>
+</form></body></html>

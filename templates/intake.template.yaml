@@ -1,0 +1,14 @@
+chat_language: ""
+region: {cities: [], radius_km: 0, relocation: false, remote: false}
+employment_formats: []
+seniority: []
+languages: {de: "", en: "", others: []}
+start_date: ""
+notice_period: ""
+work_authorisation: {wording: "", verified: false}
+exclusions: {professions: [], industries: [], employers: []}
+preferences: {sectors: [], company_size: []}
+constraints: {hours: "", travel: "", driving_licence: ""}
+cv_photo: false
+applicant_status: professional
+graduation_date: ""

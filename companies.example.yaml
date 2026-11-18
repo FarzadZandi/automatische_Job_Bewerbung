@@ -1,0 +1,5 @@
+# Each entry has a display name, ATS adapter, public board token, and optional active flag.
+companies:
+  - {name: Beispiel Daten GmbH, ats: greenhouse, token: example-data, active: false}
+  - {name: Muster Beratung AG, ats: lever, token: example-consulting, active: false}
+  - {name: Demo Technik SE, ats: smartrecruiters, token: ExampleTechnology, active: false}

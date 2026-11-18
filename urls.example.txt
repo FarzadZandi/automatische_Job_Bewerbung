@@ -1,0 +1,2 @@
+# One public Bundesagentur für Arbeit search URL per line.
+https://www.arbeitsagentur.de/jobsuche/suche?suchbereich=jobs&angebotsart=34&arbeitszeit=vz;tz&pav=true&wo=<Ort>&umkreis=50

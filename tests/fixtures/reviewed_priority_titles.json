@@ -1,0 +1,8 @@
+[
+  {"title": "Abteilungsleitung (w/m/d) Strategische Planung", "decision": "drop"},
+  {"title": "Leiter*in Stabsstelle Transformation", "decision": "drop"},
+  {"title": "Anwendungstechniker / Technischer Berater", "decision": "drop", "reason": "excluded_technical_support_role"},
+  {"title": "Sachbearbeitung Altenhilfeplanung", "decision": "proposal_only", "proposal": "sachbearbeitung"},
+  {"title": "ERP Application Specialist Microsoft Dynamics 365", "decision": "drop", "reason": "excluded_technical_support_role"},
+  {"title": "Group Controller", "decision": "proposal_only", "proposal": "group_controller"}
+]
