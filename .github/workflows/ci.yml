@@ -74,6 +74,9 @@ jobs:
         shell: cmd
         run: |
           call "Start jobfilter (Windows).bat" < NUL
+          rem Windows ends a step's child processes when the step ends, so the app is checked in this step.
+          powershell -NoProfile -Command "for ($i = 0; $i -lt 30; $i++) { try { (Invoke-WebRequest http://127.0.0.1:8791/api/hello -UseBasicParsing).Content; exit 0 } catch { Start-Sleep 3 } }; Get-Content jobfilter_app.log; exit 1"
+          if errorlevel 1 exit /b 1
           call "Check setup (Windows).bat" < NUL
           exit /b 0
       - name: Status file written by the start file
@@ -81,7 +84,8 @@ jobs:
         run: |
           cat out/setup_status.json
           python -c "import json; d=json.load(open('out/setup_status.json')); assert d['python_found'] and d['venv_ok'], d; print('start file OK on', d['os'])"
-      - name: App answers on 127.0.0.1:8791
+      - name: App answers on 127.0.0.1:8791 (Mac)
+        if: runner.os == 'macOS'
         shell: bash
         run: |
           for i in $(seq 1 20); do curl -fsS http://127.0.0.1:8791/api/hello && exit 0; sleep 3; done
