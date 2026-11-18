@@ -173,7 +173,7 @@ def test_trivago_profile_fields_are_filled_and_open_question_stays_for_checked_a
     page = _open(browser, "trivago_fields.html")
     profile = PROFILE | {
         "country": "Deutschland", "english_level": "C1", "disability": "No",
-        "start_date": "01/12/2026", "salary": "45,934.20 EUR gross per year",
+        "start_date": "01/12/2026", "salary": "52,000.00 EUR gross per year",
     }
     fields = _by_label(page.evaluate("([p, e]) => window.__jfFiller.fill(p, e)", [profile, {}]))
     values = page.evaluate("""() => ({

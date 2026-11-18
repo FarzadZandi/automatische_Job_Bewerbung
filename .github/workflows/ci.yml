@@ -86,3 +86,7 @@ jobs:
         run: |
           for i in $(seq 1 20); do curl -fsS http://127.0.0.1:8791/api/hello && exit 0; sleep 3; done
           echo "app did not answer"; exit 1
+      - name: App log (on failure)
+        if: failure()
+        shell: bash
+        run: cat jobfilter_app.log || true

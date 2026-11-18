@@ -45,7 +45,7 @@ def test_browser_and_office_lookup_on_mac(monkeypatch):
     monkeypatch.setattr(osutil.shutil, "which", lambda value: None)
     existing = {"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
                 "/Applications/LibreOffice.app/Contents/MacOS/soffice"}
-    monkeypatch.setattr(osutil.Path, "exists", lambda self: str(self) in existing)
+    monkeypatch.setattr(osutil.Path, "exists", lambda self: self.as_posix() in existing)
     assert osutil.browser_path("auto").endswith("Google Chrome")
     assert osutil.browser_path("edge") is None
     assert osutil.soffice_path().endswith("MacOS/soffice")
@@ -54,5 +54,5 @@ def test_browser_and_office_lookup_on_mac(monkeypatch):
 def test_claude_lookup_includes_homebrew_on_mac(monkeypatch):
     monkeypatch.setattr(osutil.sys, "platform", "darwin")
     monkeypatch.setattr(osutil.shutil, "which", lambda value: None)
-    monkeypatch.setattr(osutil.Path, "exists", lambda self: str(self) == "/opt/homebrew/bin/claude")
+    monkeypatch.setattr(osutil.Path, "exists", lambda self: self.as_posix() == "/opt/homebrew/bin/claude")
     assert osutil.claude_candidates() == ("/opt/homebrew/bin/claude",)

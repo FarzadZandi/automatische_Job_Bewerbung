@@ -4,9 +4,18 @@ import json
 from pathlib import Path
 from types import SimpleNamespace
 
+import pytest
+
 from jobfilter.formanswers import (
     answer_fields, build_plain_prompt, build_prompt, build_suggest_prompt, check_answer, facts_text,
 )
+
+
+@pytest.fixture(autouse=True)
+def _claude_installed(monkeypatch):
+    """Chat tests use a fake runner; pretend the Claude command line exists on the test machine."""
+    import jobfilter.claude_writer as writer
+    monkeypatch.setattr(writer, "find_claude", lambda home=None: "claude")
 
 
 def _data(path: Path) -> Path:

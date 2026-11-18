@@ -46,7 +46,11 @@ def file_lock(
             break
         except (FileExistsError, PermissionError) as error:
             if isinstance(error, PermissionError) and not lock.exists():
-                raise
+                # Windows: a lock file another process is deleting refuses new opens for a moment.
+                if time.monotonic() >= deadline:
+                    raise
+                sleeper(0.01)
+                continue
             try:
                 stale = time.time() - lock.stat().st_mtime > stale_after
             except FileNotFoundError:

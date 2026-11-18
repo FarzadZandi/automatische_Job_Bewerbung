@@ -45,7 +45,7 @@ if defined JFFIRST (
   echo First-start setup check:
   "%JFPY%" -m jobfilter doctor --json "out\setup_status.json"
   echo.
-  echo Review the OK and MISSING lines above. You can run this check later with "Check setup.bat" or the app button.
+  echo Review the OK and MISSING lines above. You can run this check later with "Check setup (Windows).bat" or the app button.
   pause
 )
 
