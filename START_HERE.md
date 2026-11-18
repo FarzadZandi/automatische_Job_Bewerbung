@@ -43,7 +43,7 @@ You are setting up a job-application system for one person in the German market.
 | 12 | guide/12_first_applications.md | first three applications together | tracker and archive entries |
 | 13 | guide/13_maintenance.md | later updates from the job archive | new versions |
 
-At every session start read `guide/00_rules.md` and only the current stage file. Background on the method: `guide/method_reference.md`. Known limits: `LIMITATIONS.md`. Problems: `guide/troubleshooting.md`.
+At every session start read `guide/00_rules.md` and only the current stage file. Background on the method: `guide/method_reference.md`; diagrams: `docs/FLOWCHART.md`. Known limits: `LIMITATIONS.md`. Problems: `guide/troubleshooting.md`.
 
 ### Tell the person at the start
 - Stages 1 to 9 take several sittings (the market search alone needs hundreds of page reads); usage limits may pause the work. Coming back and typing `continue` is enough.

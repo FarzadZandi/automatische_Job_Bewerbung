@@ -15,3 +15,5 @@ You need Windows 10/11 or macOS, Python 3.11 or newer, the Claude desktop app wi
 5. To resume, return to the same chat and type `continue`.
 
 Read `PRIVACY.md` before sharing files. No license is granted yet.
+
+How it works: [docs/FLOWCHART.md](docs/FLOWCHART.md) (setup stages, daily use, maintenance).
